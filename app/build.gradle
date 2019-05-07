@@ -19,7 +19,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 27
-    buildToolsVersion "27.0.3"
+    buildToolsVersion "28.0.3"
     defaultConfig {
         applicationId "com.orpheusdroid.screenrecorder"
         minSdkVersion 21
@@ -62,9 +62,6 @@ if (project.hasProperty('RELEASE_STORE_FILE')) {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.google.firebase:firebase-storage:11.8.0'
-    implementation 'com.google.firebase:firebase-auth:11.8.0'
-    implementation 'com.google.firebase:firebase-core:11.8.0'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
@@ -76,9 +73,12 @@ dependencies {
     implementation 'ly.count.android:sdk:17.05'
     implementation 'life.knowledge4:k4l-video-trimmer:1.0'
     testImplementation 'junit:junit:4.12'
+    implementation 'io.tus.android.client:tus-android-client:0.1.7'
 
+    implementation 'io.tus.android.client:tus-android-client:0.1.7'
     implementation 'com.android.support:appcompat-v7:27.0.2'
-
+    implementation 'io.tus.java.client:tus-java-client:0.4.1'
+    implementation "com.google.android.gms:play-services-location:15.0.1"
 
 }
 

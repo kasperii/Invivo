@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
+import android.util.Log;
 
 /**
  * Created by razan on 2017-10-09.
@@ -16,8 +17,8 @@ public class Power {
         IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         Intent batteryStatus = context.registerReceiver(null, ifilter);
         int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
-        boolean bCharging = status == BatteryManager.BATTERY_STATUS_CHARGING;
-        //||status == BatteryManager.BATTERY_STATUS_FULL;
+        boolean bCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||status == BatteryManager.BATTERY_STATUS_FULL;
+        Log.d("Power", String.valueOf(status));
         return bCharging;
     }
 }

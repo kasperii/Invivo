@@ -20,6 +20,9 @@
 
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+
     <uses-permission
         android:name="android.permission.SYSTEM_ALERT_WINDOW"
         tools:ignore="ProtectedPermissions" />
@@ -28,6 +31,14 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="com.orpheusdroid.screenrecorder.TOGGLETOUCHES" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
+    <!-- Needed only if your app targets Android 5.0 (API level 21) or higher. -->
+    <uses-feature android:name="android.hardware.location.gps" />
+    <protected-broadcast android:name="com.motorola.location.instrumentation" />
 
     <application
         android:allowBackup="true"
@@ -42,21 +53,22 @@
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:theme="@style/AppTheme.Light.NoActionBar">
 
-            <meta-data
-                android:name="android.app.shortcuts"
-                android:resource="@xml/shortcut" />
-        </activity>
-
-
-
-        <activity
-            android:name=".LoginActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:theme="@style/AppTheme.Light.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="invivo" android:host="com.orpheusdroid.screenrecorder" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_MOUNTED" />
+                <data android:scheme="file" />
             </intent-filter>
 
             <meta-data
@@ -64,11 +76,19 @@
                 android:resource="@xml/shortcut" />
         </activity>
 
-
-
         <service
             android:name=".RecorderService"
-            android:exported="false" />
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_config" />
+        </service>
+
         <service
             android:name=".FloatingControlService"
             android:exported="false" />
@@ -77,30 +97,14 @@
                 <action android:name="org.openudid.GETUDID" />
             </intent-filter>
         </service>
+
         <service
             android:name=".UploaderService"
             android:enabled="true"
             android:exported="false" />
 
-        <receiver
-            android:name=".MyNetworkReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-                <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
-                <action android:name="android.net.wifi.STATE_CHANGE" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name=".MyPowerReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
-                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
-            </intent-filter>
-        </receiver>
+        <service android:name=".ScreenService" />
+
 
         <activity
             android:name=".AboutActivity"
@@ -120,6 +124,8 @@
             android:name=".PrivacyPolicy"
             android:label="Privacy Policy" />
         <activity android:name=".EditVideoActivity" />
+
+
 
     </application>
 

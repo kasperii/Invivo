@@ -1,97 +1,93 @@
 package com.orpheusdroid.screenrecorder;
 
 
+
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+
 import android.net.Uri;
-import android.os.Environment;
+import android.nfc.Tag;
+import android.os.AsyncTask;
 import android.os.FileObserver;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.Message;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.FileProvider;
+
 import android.util.Log;
-import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
-import com.google.firebase.storage.StorageException;
-import com.google.firebase.storage.StorageMetadata;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
+import org.json.JSONObject;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Executor;
+import java.io.FileInputStream;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+
+
+
+import io.tus.android.client.TusPreferencesURLStore;
+import io.tus.java.client.TusClient;
+
+import io.tus.java.client.TusUpload;
+import io.tus.java.client.TusUploader;
 
 public class UploaderService extends Service {
 
     private static final String TAG = "MyService";
 
-    static boolean isUploading = false;
+    private boolean isUploading;
+    private boolean isCharging;
+    private boolean isConnected;
+    private boolean isPaused;
     private static Context context;
-    private StorageReference storageReference;
     private String androidId;
-    private FileObserver fileObserver;
-    private List<String> uploadedFiles;
     private File file;
-    private static UploadTask uploadTask;
-    private Boolean saved = false;
-    private SharedPreferences prefs;
-    private SharedPreferences.Editor editor;
-    private String stringRef;
-    private String fResumedUri;
-    private String fResumedName;
-    private boolean resume;
-    private String fName;
-    private Uri fUri;
-    private String directoryFirebase;
-    private StorageReference fileRef;
-    private String fPath;
-    private Uri sessionUri;
+    private String fileName;
+    private String filePath;
+    private Uri fileUri;
 
-    private FirebaseAuth mAuth;
-
+    private TusClient client;
+    private UploadTask uploadTask;
+    private NotificationManager mNotificationManager;
+    private FloatingControlService floatingControlService;
+    private boolean isBound = false;
+    private URL uploaderURL;
 
     @Override
     public void onCreate() {
 
-        Log.d(TAG, "Try to create the service");
-
         if (!isUploading) {
             super.onCreate();
             this.context = this;
-
             androidId = getAndroidID();
             Log.d(TAG, androidId);
-
-            storageReference = FirebaseStorage.getInstance().getReference();
-
-            prefs = getSharedPreferences(Const.PREFS_NAME, Context.MODE_PRIVATE);
-            editor = prefs.edit();
-            isUploading = false;
-            resume = false;
-
-            uploadedFiles = new ArrayList<String>();
             Log.d(TAG, "Service started and running");
+        }
+
+        // Create a new TusClient
+        client = new TusClient();
+        // Configure tus HTTP endpoint. This URL will be used for creating new uploads
+        // using the Creation extension
+        try {
+            client.setUploadCreationURL(new URL("https://invivo.dsv.su.se/files/"));
+            // Enable resuming uploads by sorting the upload URL in the preferences
+            // and preserve them after app restarts
+            SharedPreferences pref = getSharedPreferences("tus", 0);
+            client.enableResuming(new TusPreferencesURLStore(pref));
+        } catch (MalformedURLException e) {
+            Log.d(TAG, e.toString());
         }
     }
 
@@ -105,204 +101,268 @@ public class UploaderService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        super.onStartCommand(intent, flags, startId);
-
-        // Check if user is signed in (non-null) and update UI accordingly.
-        //FirebaseUser currentUser = mAuth.getCurrentUser();
-
-
-
-
         Log.d(TAG, "Service onStartCommand");
 
-        //Creating new thread for my service
-        //Always write your long running tasks in a separate thread, to avoid ANR
+        switch (intent.getAction()) {
+            case Const.FILE_UPLOADING_START:
+                Log.d(TAG, "Start uploading");
+                isCharging = true;
+                isConnected = true;
+                isPaused = false;
+                beginUpload();
+                break;
 
-        if (!isUploading) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        //check if we need to resume after the service gets killed
-                        stringRef = prefs.getString(Const.SESSION_KEY, null);
-                        fResumedUri = prefs.getString(Const.FILE_URI, null);
-                        fResumedName = prefs.getString(Const.FILE_NAME, null);
+            case Const.FILE_UPLOADING_STOP:
+                Log.d(TAG, "Stop uploading");
+                isCharging = false;
+                isConnected = false;
+                break;
 
-                        if (isResume()) {
-                            resume = true;
-                            uploadFiles();
-                        } else {
-                            Log.d(TAG, "Start uploading...");
-                            resume = false;
-                            uploadFiles();
-                        }
+        }
 
-                    } catch (Exception e) {
-                    }
+        return START_STICKY;
+    }
 
-                    //Stop service once it finishes its task
-                    stopSelf();
+    private void beginUpload() {
+        resumeUpload();
+    }
+
+
+    //Service connection to manage the connection state between this service and the bounded service
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            //Get the service instance
+            FloatingControlService.ServiceBinder binder = (FloatingControlService.ServiceBinder) service;
+            floatingControlService = binder.getService();
+            isBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            floatingControlService = null;
+            isBound = false;
+        }
+    };
+
+    public void pauseUpload() {
+        uploadTask.cancel(false);
+    }
+
+
+    public void resumeUpload() {
+
+        Log.d(TAG, "Upload and resume");
+        try {
+            if ((MyFiles.getFiles(MyDirectory.path).size()) == 0 || MyFiles.getFiles(MyDirectory.path) == null) {
+                Log.d(TAG, "No files to be uploaded...");
+                MyNotification.createNotification(context, 0, Const.EMPTY_DIRECTORY, Const.NO_FILE_TO_BE_UPLOADED);
+                return;
+            }
+
+            file = MyFiles.getFileOldest(MyDirectory.path);
+            filePath = file.getAbsolutePath();
+            fileName = file.getName();
+            fileUri = Uri.fromFile(new File(filePath));
+            TusUpload upload = new TusUpload(file);
+
+            Log.d(TAG, String.valueOf(MyFiles.getFileLength(MyDirectory.path)));
+
+            // make sure that the file exits and it is closed
+            if (file != null && file.exists()) {
+                Log.d(TAG, "Closed: "+String.valueOf(MyFiles.isClosed(file)));
+                Log.d(TAG, fileName);
+                if (MyFiles.isClosed(file)) {
+                    uploadTask = new UploadTask(this, client, upload);
+                    uploadTask.execute(new Void[0]);
+                } else {
+                    MyNotification.createNotification(context, 0, Const.LOOKING_FOR_FILES, Const.WAITING_FILES_CLOSE);
                 }
-            }).start();
+            } else {
+                beginUpload();
+            }
 
+        } catch (Exception e) {
+            Log.d(TAG, e.toString());
         }
-
-        return START_STICKY; // the system will try to re-create your service after it is killed
     }
 
 
-    public boolean isResume() {
-        boolean resume = false;
-        prefs = getSharedPreferences(Const.PREFS_NAME, Context.MODE_PRIVATE);
-        String sRef = prefs.getString(Const.SESSION_KEY, null);
-        String fUri = prefs.getString(Const.FILE_URI, null);
-        String fName = prefs.getString(Const.FILE_NAME, null);
+    private class UploadTask extends AsyncTask<Void, Long, URL> {
+        private TusClient client;
+        private TusUpload upload;
+        private Exception exception;
 
-        if (sRef != null && fUri != null && fName != null) {
-            resume = true;
+        public UploadTask(UploaderService service, TusClient client, TusUpload upload) {
+            this.client = client;
+            this.upload = upload;
         }
-        return resume;
-    }
 
-    private void uploadFiles() {
+        @Override
+        protected void onPreExecute() {
+            //activity.setPauseButtonEnabled(true);
+        }
 
-        if ((MyFiles.getFiles().length) == 0 || MyFiles.getFiles() == null) {
-            Log.d(TAG, "No files to be uploaded...");
-            MyNotification.showNotification(context, 0, Const.EMPTY_DIRECTORY, true);
-            editor.clear();
-            editor.commit();
+        @Override
+        protected void onPostExecute(URL uploadURL) {
+            // delete file
+            Log.d(TAG, "Upload finished.");
+            Log.d(TAG, "Upload available at:" + uploadURL.toString());
+            MyFiles.deleteFile(fileUri, context);
             isUploading = false;
-            return; // The directory is empty, loop finishes
+            isPaused = false;
+            uploadJson(fileName.substring(0,fileName.length()- 4));
+            beginUpload();
         }
 
+        @Override
+        protected void onCancelled() {
+            if (exception != null) {
+                Log.d(TAG, exception.toString());
+            }
+            // activity.setPauseButtonEnabled(false);
+        }
+
+
+        @Override
+        protected void onProgressUpdate(Long... updates) {
+            long uploadedBytes = updates[0];
+            long totalBytes = updates[1];
+            final int progress = (int) ((double) uploadedBytes / totalBytes * 100);
+
+            if (isPaused) {
+                return;
+            }
+
+            // start uploading the file
+            FileObserver fileObserver = new FileObserver(MyDirectory.path) {
+                @Override
+                public void onEvent(int event, String fileDeleted) {
+                    if (((FileObserver.DELETE | FileObserver.MOVED_FROM) & event) != 0) {
+                        if (fileName.equals(fileDeleted) && progress != 100) {
+                            Log.d(TAG, "We are in the observer");
+                            Log.d(TAG, "FileObserver: " + event + " " + "filePath: " + fileDeleted);
+                            MyNotification.createNotification(context, 0, fileName, Const.FILE_IS_DELETED);
+                            pauseUpload(); // if the file gets deleted during the upload process, then the upload process should stop
+                            isPaused = true;
+                            beginUpload();
+                        } else {
+                            Log.d(TAG, "Other file was deleted " + fileDeleted);
+                        }
+                    }
+                }
+            };
+            fileObserver.startWatching();
+
+            Log.d(TAG, "Upload: " + progress + " " + fileName);
+            MyNotification.createNotification(context, progress, fileName, Const.UPLOAD);
+            if (!isCharging || !isConnected) {
+                MyNotification.createNotification(context, progress, fileName, Const.NO_CHARGER);
+                isPaused = true;
+                pauseUpload();
+            }
+        }
+
+        @Override
+        protected URL doInBackground(Void... params) {
+            try {
+                TusUploader uploader = client.resumeOrCreateUpload(upload);
+                long totalBytes = upload.getSize();
+                long uploadedBytes = uploader.getOffset();
+                uploaderURL =  uploader.getUploadURL();
+
+                // Upload file in 1MiB chunks
+                uploader.setChunkSize(1024 * 1024);
+
+                while (!isCancelled() && uploader.uploadChunk() > 0) {
+                    uploadedBytes = uploader.getOffset();
+                    publishProgress(uploadedBytes, totalBytes);
+                }
+
+                uploader.finish();
+                return uploader.getUploadURL();
+
+            } catch (Exception e) {
+                exception = e;
+                Log.d(TAG, String.valueOf(e));
+                cancel(true);
+            }
+            return null;
+        }
+    }
+
+
+    public void uploadJson(final String jsonFileName) {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                OutputStream os = null;
+                InputStream is = null;
+                HttpURLConnection conn = null;
                 try {
+                    //constants
+                    URL url = new URL("https://invivo.dsv.su.se/upload.php");
+                    Log.d(TAG, "Json upload");
+                    File file = new File(MyDirectory.path + File.separator + jsonFileName + ".json");
 
-                    if (resume) {
-                        file = new File(MyDirectory.path + "/" + fResumedName);
-                        fPath = file.getAbsolutePath();
-                        fUri = Uri.fromFile(new File(fPath));
-                        fName = file.getName();
-                        sessionUri = Uri.parse(stringRef);
-                        directoryFirebase = androidId.concat("/").concat(fResumedName);
-                        fileRef = storageReference.child(directoryFirebase); //"images/pic.jpg" This folder will be created in firebase database, and the file will be created with the specified name
-                        uploadTask = fileRef.putFile(fUri,
-                                new StorageMetadata.Builder().build(), sessionUri);
-                        // resume = true;
-                    } else {
-                        file = MyFiles.getFileOldest();
-                        fPath = file.getAbsolutePath();
-                        fUri = Uri.fromFile(new File(fPath));
-                        fName = file.getName();
-                        directoryFirebase = androidId.concat("/").concat(fName);
-                        fileRef = storageReference.child(directoryFirebase);// "images/pic.jpg" This folder will be created in firebase database, and the file will be created with the specified name
-                        uploadTask = fileRef.putFile(fUri);
-                        // resume = false;
+                    FileInputStream stream = new FileInputStream(file);
+                    String jString = null;
+                    try {
+                        FileChannel fc = stream.getChannel();
+                        MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+                        /* Instead of using default, pass in a decoder. */
+                        jString = Charset.defaultCharset().decode(bb).toString();
+                    } finally {
+                        stream.close();
                     }
 
-                    // make sure that the file exits and it is closed
-                    if (file != null && file.exists()) {
+                    JSONObject jsonObj = new JSONObject(jString);
+                    jsonObj.put("localPath", uploaderURL);
+                    jString = jsonObj.toString();
 
-                        if (MyFiles.isClosed(file)) {
-                            // start uploading the file
-                            fileObserver = new FileObserver(MyDirectory.path) {
-                                @Override
-                                public void onEvent(int event, String fileDeleted) {
-                                    if (((FileObserver.DELETE | FileObserver.MOVED_FROM) & event) != 0) {
-                                        if (fName.equals(fileDeleted)) {
-                                            Log.d(TAG, "We are in the observer");
-                                            Log.d(TAG, "FileObserver: " + event + " " + "filePath: " + fileDeleted);
-                                            uploadTask.pause();// if the file gets deleted during the upload process, then the upload process should stop
-                                            MyNotification.showNotification(context, 0, Const.EMPTY_DIRECTORY, true);
-                                            isUploading = false;
-                                            editor.clear();
-                                            editor.commit();
-                                            uploadFiles();
-                                        } else {
-                                            Log.d(TAG, "Other file was deleted " + fileDeleted);
-                                        }
-                                    }
-                                }
-                            };
-                            fileObserver.startWatching();
+                    conn = (HttpURLConnection) url.openConnection();
+                    conn.setReadTimeout(10000 /*milliseconds*/);
+                    conn.setConnectTimeout(15000 /* milliseconds */);
+                    conn.setRequestMethod("POST");
+                    conn.setDoInput(true);
+                    conn.setDoOutput(true);
+                    conn.setFixedLengthStreamingMode(jString.getBytes().length);
 
-                            //TODO check if the file has not been stored before
-                            uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                                @Override
-                                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                                    Log.d(TAG, "uploaded successfully");
-                                    uploadedFiles.add(fName);
-                                    Log.d(TAG + " Size: ", String.valueOf(uploadedFiles.size()));
-                                    MyFiles.deleteFile(fUri);
-                                    editor.clear();
-                                    editor.commit();
-                                    isUploading = false;
-                                    resume = false;
-                                    uploadFiles(); // loop continues only if you get the success callback from previous request.
-                                }
-                            })
-                                    .addOnFailureListener(new OnFailureListener() {
-                                        @Override
-                                        public void onFailure(Exception exception) {
-                                            int errorCode = ((StorageException) exception).getErrorCode();
-                                            uploadTask.pause();
-                                            String errorMessage = exception.getMessage();
-                                            Log.d(TAG, "error msg: " + errorMessage + errorCode);
-                                        }
-                                    })
-                                    .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                                        @Override
-                                        public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                                            Uri sessionUri = taskSnapshot.getUploadSessionUri();
-                                            isUploading = true;
-                                            if (sessionUri != null && !saved) {
-                                                saved = true;
-                                                Log.d(TAG, sessionUri.toString());
-                                                editor.putString(Const.SESSION_KEY, sessionUri.toString());
-                                                editor.putString(Const.FILE_URI, fUri.toString());
-                                                editor.putString(Const.FILE_NAME, fName);
-                                                editor.commit();
-                                            }
+                    //make some HTTP header nicety
+                    conn.setRequestProperty("Content-Type", "application/json;charset=utf-8");
+                    conn.setRequestProperty("X-Requested-With", "XMLHttpRequest");
 
-                                            double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-                                            //    Log.d(TAG, "Progress " + progress + " " + fName);
+                    //open
+                    conn.connect();
 
-                                            if (resume) {
-                                                Log.d(TAG, "Resume:" + progress + " " + fName);
-                                                MyNotification.showNotification(context, progress, fName, false);
-                                            } else {
-                                                Log.d(TAG, "Upload: " + progress + " " + fName);
-                                                MyNotification.showNotification(context, progress, fName, true);
-                                            }
+                    //setup send
+                    os = new BufferedOutputStream(conn.getOutputStream());
+                    os.write(jString.getBytes());
+                    //clean up
+                    os.flush();
 
-                                            if (!Power.isCharging(context) || !NetworkUtil.isConnected(context)) {
-                                                isUploading = false;
-                                                resume = false;
-                                                uploadTask.pause();
-                                            }
-                                        }
-                                    });
-                        } else {
-                            MyNotification.showNotification(context, 0, "LookingForFile", true);
-                        }
+                    //do somehting with response
+                    is = conn.getInputStream();
+                    String contentAsString = is.toString();
+                    Log.d(TAG, "success");
+                    MyFiles.deleteFile(Uri.fromFile(file), context);
 
-                    } else {
-                        isUploading = false;
-                        resume = false;
-                        Log.d(TAG, "The file does not exist...");
-                        //make sure that the shared preferences is empty now
-                        editor.clear();
-                        editor.commit();
-                        uploadFiles();
-                    } // The file does not exist
                 } catch (Exception e) {
-                    isUploading = false;
-                    resume = false;
-                    throw e;
-                }
+                    Log.d(TAG, "ERROR JSON" +e);
+                    e.printStackTrace();
+                } finally {
+                    //clean up
+                    try {
+                        if (os != null && is != null){
+                            os.close();
+                            is.close();
+                        }
+                        conn.disconnect();
 
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }).start();
     }

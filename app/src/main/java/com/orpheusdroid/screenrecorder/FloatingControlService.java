@@ -53,6 +53,8 @@ public class FloatingControlService extends Service implements View.OnClickListe
     private View controls;
     private ImageButton pauseIB;
     private ImageButton resumeIB;
+    private ImageButton startIB;
+    ImageButton stopIB;
     private IBinder binder = new ServiceBinder();
 
     @Override
@@ -65,12 +67,14 @@ public class FloatingControlService extends Service implements View.OnClickListe
         controls = floatingControls.findViewById(R.id.controls);
 
         //Initialize imageButtons
-        ImageButton stopIB = controls.findViewById(R.id.stop);
+        stopIB = controls.findViewById(R.id.stop);
         pauseIB = controls.findViewById(R.id.pause);
         resumeIB = controls.findViewById(R.id.resume);
+        startIB = controls.findViewById(R.id.start);
         resumeIB.setEnabled(false);
 
         stopIB.setOnClickListener(this);
+        startIB.setOnClickListener(this);
 
         //Get floating control icon size from sharedpreference
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -231,6 +235,10 @@ public class FloatingControlService extends Service implements View.OnClickListe
             case R.id.resume:
                 resumeScreenRecording();
                 break;
+            case R.id.start:
+               startScreenRecording();
+            case R.id.fab:
+
         }
 
         //Provide an haptic feedback on button press
@@ -250,7 +258,7 @@ public class FloatingControlService extends Service implements View.OnClickListe
     // Set pause intent and start the recording service
     private void pauseScreenRecording() {
         Intent pauseIntent = new Intent(this, RecorderService.class);
-        pauseIntent.setAction(Const.SCREEN_RECORDING_PAUSE);
+        pauseIntent.setAction(Const.SCREEN_RECORDING_SKIP);
         startService(pauseIntent);
     }
 
@@ -261,15 +269,26 @@ public class FloatingControlService extends Service implements View.OnClickListe
         startService(stopIntent);
     }
 
+    // Set start intent and start the recording service
+    private void startScreenRecording() {
+        Intent startIntent = new Intent(this, RecorderService.class);
+        startIntent.setAction(Const.SCREEN_RECORDING_START);
+        startService(startIntent);
+    }
+
     //Enable/disable pause/resume ImageButton depending on the current recording state
     public void setRecordingState(RecordingState state) {
         switch (state) {
             case PAUSED:
                 pauseIB.setEnabled(false);
-                resumeIB.setEnabled(true);
+                resumeIB.setEnabled(false);
                 break;
             case RECORDING:
                 pauseIB.setEnabled(true);
+                resumeIB.setEnabled(false);
+                break;
+            case STOPPED:
+                pauseIB.setEnabled(false);
                 resumeIB.setEnabled(false);
                 break;
         }

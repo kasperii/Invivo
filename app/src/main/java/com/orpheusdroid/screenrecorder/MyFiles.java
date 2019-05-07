@@ -1,38 +1,81 @@
 package com.orpheusdroid.screenrecorder;
 
+import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
 
 public class MyFiles {
 
     public static final String TAG = "MyFiles";
-    private static File[] fList;
-    private static File directory = new File( MyDirectory.path);
+    private static ArrayList<File> fList;
+    private static File directory = new File(MyDirectory.path);
 
+    public static ArrayList<File> getFiles(String myDirectory) {
+        File[] fList = directory.listFiles();
+        ArrayList<File> allFiles = new ArrayList<>();
 
-    public static File[] getFiles() {
-        Log.d(TAG, "Files path: " + MyDirectory.path);
-        return directory.listFiles();
+        for (File file : fList) {
+            if (file.isFile() && file.toString().endsWith(".mp4")) {
+                allFiles.add(file);
+            } else if (file.isDirectory()) {
+                getFiles(file.getAbsolutePath());
+            }
+        }
+
+//
+//
+//        int i = 0;
+//        for (File file : fList) {
+//            if (file.isFile() && file.toString().endsWith(".mp4")) {
+//                i++;
+//            } else if (file.isDirectory()) {
+//                getFiles(file.getAbsolutePath());
+//            }
+//        }
+//
+//        File[] files = new File[i];
+//
+//        i = 0;
+//
+//        for (File file : fList) {
+//            if (file.isFile() && file.toString().endsWith(".mp4")) {
+//                files[i] = file;
+//                i++;
+//            } else if (file.isDirectory()) {
+//                getFiles(file.getAbsolutePath());
+//            }
+//        }
+
+        Log.d(TAG, String.valueOf(allFiles.size()));
+
+        for (int i = 0; i < allFiles.size(); i++) {
+            Log.d(TAG, allFiles.get(i).getName());
+        }
+
+        return allFiles;
+        //return directory.listFiles();
     }
 
+    public static File getFileOldest(String myDirectory) {
+        fList = getFiles(myDirectory); // get the file list
+        File file = fList.get(0);
 
-    public static File getFileOldest(){
-        fList = getFiles(); // get the file list
-        File file = fList[0];
-        if (fList.length > 0){
-            long max = fList[0].lastModified();
-            for (int i = 0; i<fList.length; i++ ){
-                if (fList[0].lastModified()> max){
-                    max = fList[0].lastModified();
-                    file = fList[0];
+        if (fList.size() > 0) {
+            long min = fList.get(0).lastModified();
+            for (int i = 1; i < fList.size(); i++) {
+                if (fList.get(i).lastModified() < min) {
+                    min = fList.get(i).lastModified();
+                    file = fList.get(i);
                 }
             }
-
         }
         return file; // return the oldest file, if there is no file null will be returned
     }
@@ -42,30 +85,42 @@ public class MyFiles {
         long lastModified = file.lastModified();
         long currentTime = Calendar.getInstance().getTimeInMillis();
         long fModifiedTime = (long) (((currentTime - lastModified) / (1000 * 60)) % 60);
-        Log.d(TAG, String.valueOf(fModifiedTime));
+        //Log.d(TAG, " The value of  "+String.valueOf(fModifiedTime));
 
-
-        if (fModifiedTime >= 1){
+        if (fModifiedTime >= 1) {
             return true;
-        }
-        else{
+        } else {
             return false;
         }
 
     }
 
-    public static int getFileLength(){
-        return getFiles().length;
+    public static int getFileLength(String myDirectory) {
+        return getFiles(myDirectory).size();
     }
 
 
-    public static void deleteFile(Uri fileUri) {
-        File fdelete = new File(fileUri.getPath());
-        if (fdelete.exists()) {
-            if (fdelete.delete()) {
+    public static void deleteFile(Uri fileUri, Context context) {
+        File file = new File(fileUri.getPath());
+        Log.d(TAG, String.valueOf(file.getAbsoluteFile()));
+        file.delete();
+
+        if (file.exists()) {
+            boolean deleted = file.delete();
+            if (deleted) {
                 Log.d(TAG, "file Deleted :" + fileUri.getPath());
             }
         }
+
+        // context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.fromFile(file.getAbsoluteFile())));
+        //context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory())));
+
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        File f = new File(file.getAbsolutePath());
+        Uri contentUri = Uri.fromFile(f);
+        mediaScanIntent.setData(contentUri);
+        context.sendBroadcast(mediaScanIntent);
+
     }
 
     public static String getMimeType(String path) {

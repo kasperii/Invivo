@@ -62,6 +62,7 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Sh
     private FolderChooser dirChooser;
     private MainActivity activity;
 
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
@@ -302,6 +303,12 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Sh
         }
     }
 
+    public void requestLocationPermission() {
+        if (activity != null) {
+            activity.requestPermissionLocation();
+        }
+    }
+
     private void requestSystemWindowsPermission() {
         if (activity != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             activity.requestSystemWindowsPermission();
@@ -364,9 +371,11 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Sh
                 if ((grantResults.length > 0) && (grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                     Log.d(Const.TAG, "Record audio permission granted.");
                     recaudio.setChecked(true);
+                    requestLocationPermission();
                 } else {
                     Log.d(Const.TAG, "Record audio permission denied");
                     recaudio.setChecked(false);
+                    requestLocationPermission();
                 }
                 return;
             case Const.SYSTEM_WINDOWS_CODE:
@@ -376,6 +385,12 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Sh
                 } else {
                     Log.d(Const.TAG, "System Windows permission denied");
                     floatingControl.setChecked(false);
+                }
+            case Const.LOCATION_REQUEST_CODE:
+                if ((grantResults.length > 0) && (grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    Log.d(Const.TAG, "Location permission granted.");
+                } else {
+                    Log.d(Const.TAG, "Location permission denied");
                 }
             default:
                 Log.d(Const.TAG, "Unknown permission request with request code: " + requestCode);

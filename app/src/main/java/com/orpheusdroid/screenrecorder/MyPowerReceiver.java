@@ -1,15 +1,21 @@
 package com.orpheusdroid.screenrecorder;
 
+import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
+import android.widget.Toast;
 
 public class MyPowerReceiver extends BroadcastReceiver{
 
 
     private static final String TAG = "MyPowerReceiver";
 
+    @TargetApi(Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onReceive(Context context, Intent intent) {
 
@@ -18,15 +24,14 @@ public class MyPowerReceiver extends BroadcastReceiver{
         if(action.equals(Intent.ACTION_POWER_CONNECTED))
         {
             Log.d(TAG, "Power connected ");
-            MyBroadcast.startService(context);
         }
         else if(action.equals(Intent.ACTION_POWER_DISCONNECTED))
         {
             Log.d(TAG, "Power not connected ");
-            MyBroadcast.startService(context);
+            Intent uploaderStopIntent = new Intent(context, UploaderService.class);
+            uploaderStopIntent.setAction(Const.FILE_UPLOADING_STOP);
+            context.startService(uploaderStopIntent);
         }
-
-        // Toast.makeText(context, "Power changes...", Toast.LENGTH_LONG).show();
     }
 
 }

@@ -19,14 +19,20 @@
     <string name="fileprefix_key" translatable="false">fileprefix</string>
     <string name="preference_filename_prefix_title">File name prefix</string>
     <string name="storage_permission_request_title">Allow Storage Permission</string>
+    <string name="Location_permission_request_title">Allow Location Permission</string>
     <string name="storage_permission_request_summary">Write permission to storage is required to save the recorded video.</string>
+    <string name="Location_permission_request_summary">Location permission is required.</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="screen_recording_permission_denied">Screen Recording Permission Denied</string>
-    <string name="screen_recording_notification_title">Screen recording</string>
+    <string name="screen_recording_notification_title">Screen Recording</string>
+    <string name="screen_pause_notification_title">Screen Recording Paused</string>
+    <string name="screen_stop_notification_title">Screen Recording Stopped</string>
+    <string name="screen_skip_notification_title">Current Session Skipped </string>
     <string name="screen_recording_notification_action_stop">Stop</string>
-    <string name="screen_recording_notification_action_pause">Pause</string>
-    <string name="screen_recording_notification_action_resume">Resume</string>
+    <string name="screen_recording_notification_action_pause">Skip Session</string>
+    <string name="screen_recording_notification_action_resume"> Until next session</string>
+    <string name="screen_recording_notification_action_start">Start</string>
     <string name="fatal_exception_message">ScreenRecorder: Fatal Exception occurred. Log has been sent</string>
     <string name="about_activity_label">About</string>
     <string name="snackbar_storage_permission_message">Grant storage perm</string>
@@ -41,7 +47,9 @@
     <string name="opensource_info">This app is opensourced and the source could be obained at \n\nGithub url: %1$s\n\nLicense: %2$s</string>
     <string name="fab_record_hint">Start recording</string>
     <string name="recording_failed_toast">Screen recording failed.</string>
+    <string name="uploading_failed_toast">Screen recording failed.</string>
     <string name="screenrecording_already_active_toast">Screen recording session already active</string>
+    <string name="screenuploading_already_active_toast">Screen uploading session already active</string>
     <string name="large_resolution_selected_toast">The selected resolution is larger than display resolution. Using %1$s resolution instead</string>
     <string name="shortcut_short_label">Record</string>
     <string name="shortcut_long_label">Quick Record</string>
