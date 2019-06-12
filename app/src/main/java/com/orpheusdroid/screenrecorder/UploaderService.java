@@ -312,13 +312,17 @@ public class UploaderService extends Service {
                         MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
                         /* Instead of using default, pass in a decoder. */
                         jString = Charset.defaultCharset().decode(bb).toString();
-                    } finally {
+                    }catch(Exception e){
+                        Log.d(TAG, "Exception file inputstream: "+e);
+                    }
+                    finally {
                         stream.close();
                     }
 
                     JSONObject jsonObj = new JSONObject(jString);
                     jsonObj.put("localPath", uploaderURL);
                     jString = jsonObj.toString();
+                    Log.d(TAG, "JString "+jString);
 
                     conn = (HttpURLConnection) url.openConnection();
                     conn.setReadTimeout(10000 /*milliseconds*/);
@@ -345,6 +349,7 @@ public class UploaderService extends Service {
                     is = conn.getInputStream();
                     String contentAsString = is.toString();
                     Log.d(TAG, "success");
+                    Log.d(TAG, "Content as String: "+contentAsString);
                     MyFiles.deleteFile(Uri.fromFile(file), context);
 
                 } catch (Exception e) {

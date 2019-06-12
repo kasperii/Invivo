@@ -153,8 +153,10 @@ public class MainActivity extends AppCompatActivity {
     } else if (getIntent().getScheme() != null && getIntent().getScheme().equals("invivo")) {
       if (Intent.ACTION_VIEW.equals(intent.getAction())) {
         Uri uri = intent.getData();
-        final String selector = uri.getQueryParameter("selector");
+        Log.d(Const.TAG, "URI: "+uri);
+        Log.d(Const.TAG, "Intent: "+ getIntent().toString());
 
+        final String selector = uri.getQueryParameter("selector");
         final String token = uri.getQueryParameter("token");
         final String udid = Settings.Secure.getString(getApplicationContext().getContentResolver(),
                 Settings.Secure.ANDROID_ID);
@@ -167,8 +169,11 @@ public class MainActivity extends AppCompatActivity {
             try {
               yahoo = new URL("https://invivo.dsv.su.se/linkaccount.php?selector=" + selector + "&token=" + token + "&udid=" + udid);
               Log.d(Const.TAG, "Yahooo: " + yahoo);
+              Log.d(Const.TAG, "Selector "+selector);
+              Log.d(Const.TAG, "token "+ token);
+
             } catch (MalformedURLException e) {
-              Log.d(Const.TAG, "EXCEPTION URL" + e.toString());
+              Log.d(Const.TAG, "MalformedURL" + e.toString());
             }
             BufferedReader in = null;
             try {
@@ -176,16 +181,16 @@ public class MainActivity extends AppCompatActivity {
                       new InputStreamReader(
                               yahoo.openStream()));
             } catch (Exception e) {
-              Log.d(Const.TAG, "EXCEPTION URL" + e.toString());
+              Log.d(Const.TAG, "EXCEPTION BufferedReader" + e.toString());
             }
 
             String inputLine;
             try {
               while ((inputLine = in.readLine()) != null)
-                Log.d(Const.TAG, "Yahooo: " + inputLine);
+                Log.d(Const.TAG, "Reply from server: " + inputLine);
               in.close();
             } catch (Exception e) {
-              Log.d(Const.TAG, "EXCEPTION URL" + e.toString());
+              Log.d(Const.TAG, "EXCEPTION Inputline" + e.toString());
             }
           }
         }).start();
