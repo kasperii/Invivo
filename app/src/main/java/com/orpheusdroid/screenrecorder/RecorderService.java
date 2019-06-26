@@ -322,8 +322,10 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
 
     public static void startService(Context context) {
         if (((NetworkUtil.isWifiConnected(context) || NetworkUtil.isConnected(context)) && (NetworkUtil.getConnectivityStatus(context
-        ) == Const.TYPE_WIFI))) { //&& Power.isCharging(context)
-            Log.d(Const.TAG, "Start the service...");
+        )== Const.TYPE_WIFI || (NetworkUtil.getConnectivityStatus(context)== Const.TYPE_MOBILE)))) { //&& Power.isCharging(context)
+            // it uploads on wifi and mobile network
+
+            Log.d(Const.TAG, "Start uploading service...");
             Log.d(Const.TAG, String.valueOf(NetworkUtil.getConnectivityStatus(context)));
             Intent uploaderIntent = new Intent(context, UploaderService.class);
             uploaderIntent.setAction(Const.FILE_UPLOADING_START);

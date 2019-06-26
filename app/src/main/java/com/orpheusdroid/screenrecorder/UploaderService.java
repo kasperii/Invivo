@@ -173,6 +173,7 @@ public class UploaderService extends Service {
                 Log.d(TAG, "Closed: "+String.valueOf(MyFiles.isClosed(file)));
                 Log.d(TAG, fileName);
                 if (MyFiles.isClosed(file)) {
+                    Log.d(TAG, "File length: "+file.length());
                     uploadTask = new UploadTask(this, client, upload);
                     uploadTask.execute(new Void[0]);
                 } else {
@@ -183,7 +184,9 @@ public class UploaderService extends Service {
             }
 
         } catch (Exception e) {
-            Log.d(TAG, e.toString());
+            Log.d(TAG + "uploading tus ", e.toString());
+            Log.d(TAG, "Not uploading" );
+
         }
     }
 
@@ -271,19 +274,32 @@ public class UploaderService extends Service {
                 long uploadedBytes = uploader.getOffset();
                 uploaderURL =  uploader.getUploadURL();
 
+                Log.d(TAG, "Total bytes"+ totalBytes);
+
                 // Upload file in 1MiB chunks
                 uploader.setChunkSize(1024 * 1024);
 
+                Log.d(TAG, "before while");
+                Log.d(TAG, "before while"+ isCancelled());
+                Log.d(TAG, "before while"+ uploader.uploadChunk());
+
+
                 while (!isCancelled() && uploader.uploadChunk() > 0) {
+                    Log.d(TAG, "While"+ isCancelled());
+                    Log.d(TAG, "While"+ uploader.uploadChunk());
                     uploadedBytes = uploader.getOffset();
                     publishProgress(uploadedBytes, totalBytes);
                 }
+
+                Log.d(TAG, "after while");
 
                 uploader.finish();
                 return uploader.getUploadURL();
 
             } catch (Exception e) {
                 exception = e;
+                Log.d(TAG, "doInBackground exception");
+                Log.d(TAG, "Upload URL: "+uploaderURL.toString());
                 Log.d(TAG, String.valueOf(e));
                 cancel(true);
             }

@@ -65,14 +65,15 @@ public class MyNotification {
                         public void run() {
                             switch (fName) {
                                 case Const.EMPTY_DIRECTORY:
-                                    builder.setContentText("No files to be uploaded")
+                                    builder.setContentText("All files have been uploaded")
                                             .setOngoing(false)
                                             .setProgress(0, 0, false);
                                     notifManager.notify(NOTIFY_ID, builder.build());
                                     break;
 
                                 case Const.LOOKING_FOR_FILES:
-                                    builder.setContentText("Uploading starts next plug in")
+                                    builder.setContentText("File open error!")
+                                            //setStyle(new NotificationCompat.BigTextStyle().bigText(Const.FILE_IS_NOT_CLOSED))
                                             .setOngoing(false)
                                             .setProgress(0, 0, false);
                                     notifManager.notify(NOTIFY_ID, builder.build());
@@ -114,14 +115,15 @@ public class MyNotification {
 
                             switch (fName) {
                                 case Const.EMPTY_DIRECTORY:
-                                    builder.setContentText("No files to be uploaded")
+                                    builder.setContentText("All files have been uploaded")
                                             .setOngoing(false)
                                             .setProgress(0, 0, false);
                                     notifManager.notify(NOTIFY_ID, builder.build());
                                     break;
 
                                 case Const.LOOKING_FOR_FILES:
-                                    builder.setContentText("Uploading starts again next plug in")
+                                    builder.setContentText("File open error!")
+                                            //setStyle(new NotificationCompat.BigTextStyle().bigText(Const.FILE_IS_NOT_CLOSED))
                                             .setOngoing(false)
                                             .setProgress(0, 0, false);
                                     notifManager.notify(NOTIFY_ID, builder.build());

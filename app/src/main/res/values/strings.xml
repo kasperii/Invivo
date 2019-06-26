@@ -5,14 +5,17 @@
     <string name="preference_fps_title">Frames per second</string>
     <string name="preference_fps_summary">Choose fps to record at</string>
     <string name="preference_bit_title">Bit rate</string>
+    <string name="preference_wifi_title">WiFi</string>
     <string name="preference_bit_summary">Choose bit rate</string>
     <string name="preference_audio_record_title">Record audio</string>
     <string name="preference_audio_record_summary">Records audio from mic along with screen video</string>
+    <string name="preference_wifi_summary">Uploads recordings using WiFi</string>
     <string name="preference_save_location_title">Save location</string>
     <string name="res_key" translatable="false">resolution</string>
     <string name="fps_key" translatable="false">fps</string>
     <string name="bitrate_key" translatable="false">bitrate</string>
     <string name="audiorec_key" translatable="false">audiorec</string>
+    <string name="wifi_key" translatable="false">wifi</string>
     <string name="savelocation_key" translatable="false">savelocation</string>
     <string name="filename_key" translatable="false">filename</string>
     <string name="preference_filename_format_title">File name format</string>
@@ -75,6 +78,7 @@
     <string name="alert_message_create_folder">Enter folder name</string>
     <string name="prefs_category_video_settings_title">Video settings</string>
     <string name="prefs_category_audio_settings_title">Audio settings</string>
+    <string name="prefs_category_wifi_settings_title">Wifi settings</string>
     <string name="prefs_category_save_options_title">Save options</string>
     <string name="prefs_category_recording_settings_title">Recording Settings</string>
     <string name="menu_privacy_policy">Privacy Policy</string>

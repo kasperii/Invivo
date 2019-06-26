@@ -56,6 +56,7 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Sh
 
     SharedPreferences prefs;
     private CheckBoxPreference recaudio;
+    private CheckBoxPreference wifi;
     private CheckBoxPreference floatingControl;
     private CheckBoxPreference crashReporting;
     private CheckBoxPreference usageStats;
@@ -88,6 +89,7 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Sh
         ListPreference fps = (ListPreference) findPreference(getString(R.string.fps_key));
         ListPreference bitrate = (ListPreference) findPreference(getString(R.string.bitrate_key));
         recaudio = (CheckBoxPreference) findPreference(getString(R.string.audiorec_key));
+        wifi = (CheckBoxPreference) findPreference(getString(R.string.wifi_key));
         ListPreference filenameFormat = (ListPreference) findPreference(getString(R.string.filename_key));
         EditTextPreference filenamePrefix = (EditTextPreference) findPreference(getString(R.string.fileprefix_key));
         dirChooser = (FolderChooser) findPreference(getString(R.string.savelocation_key));
@@ -113,6 +115,9 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Sh
         //If record audio checkbox is checked, check for record audio permission
         if (recaudio.isChecked())
             requestAudioPermission();
+
+//        if (wifi.isChecked())
+//            requestWiFiPermission();
 
         //If floating controls is checked, check for system windows permission
         if (floatingControl.isChecked())
@@ -224,6 +229,9 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Sh
             case R.string.preference_audio_record_title:
                 requestAudioPermission();
                 break;
+            case R.string.preference_wifi_title:
+                //WIFi method
+                break;
             case R.string.preference_filename_prefix_title:
                 EditTextPreference etp = (EditTextPreference) pref;
                 etp.setSummary(etp.getText());
@@ -303,6 +311,7 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Sh
         }
     }
 
+
     public void requestLocationPermission() {
         if (activity != null) {
             activity.requestPermissionLocation();
@@ -369,11 +378,12 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Sh
                 return;
             case Const.AUDIO_REQUEST_CODE:
                 if ((grantResults.length > 0) && (grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    Log.d(Const.TAG, "Record audio permission granted.");
+                    Log.d(Const.TAG, "Audio recording permission granted.");
                     recaudio.setChecked(true);
+                    //request the location permission now
                     requestLocationPermission();
                 } else {
-                    Log.d(Const.TAG, "Record audio permission denied");
+                    Log.d(Const.TAG, "Audio recording permission denied");
                     recaudio.setChecked(false);
                     requestLocationPermission();
                 }

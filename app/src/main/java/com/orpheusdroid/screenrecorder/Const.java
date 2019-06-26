@@ -85,9 +85,10 @@ public class Const {
     static final String UPLOAD = "Uploading Files";
     static final String RESUME = "Resuming Files";
     static final String NO_CHARGER = "Uploading Paused";
-    static final String WAITING_FILES_CLOSE =  "Uploader";
+    static final String WAITING_FILES_CLOSE =  "Uploader is Pending";
     static final String NO_FILE_TO_BE_UPLOADED = "Empty Directory";
     static final String FILE_IS_DELETED = "File is deleted";
+    static final String FILE_IS_NOT_CLOSED = "One of the recorded files is not closed yet or the recorder is still recording. Try to plug in the charger after 2 min of stopping the recorder";
 
     static final String LOOKING_FOR_FILES = "Looking_For_File";
 
