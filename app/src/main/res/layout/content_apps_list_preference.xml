@@ -45,17 +45,19 @@
         android:src="?attr/selected_app_check"
         android:visibility="invisible" />
 
-    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    <TextView
         android:id="@+id/appName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_toEndOf="@+id/appIcon"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="1dp"
         android:layout_toStartOf="@+id/appChecked"
+        android:layout_toEndOf="@+id/appIcon"
         android:ellipsize="marquee"
         android:gravity="center_vertical"
         android:minHeight="?android:attr/listPreferredItemHeight"
-        android:paddingEnd="15dip"
         android:paddingStart="14dip"
+        android:paddingEnd="15dip"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:textColor="?android:attr/textColorAlertDialogListItem" />
 

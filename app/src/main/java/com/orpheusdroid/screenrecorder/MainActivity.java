@@ -20,7 +20,6 @@ package com.orpheusdroid.screenrecorder;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
-import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -40,30 +39,29 @@ import android.os.Environment;
 
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.TabLayout;
-import android.support.v13.app.FragmentStatePagerAdapter;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.NonNull;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.tabs.TabLayout;
+import androidx.legacy.app.FragmentStatePagerAdapter;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.viewpager.widget.ViewPager;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.LinearLayout;
 import android.widget.Toast;
+
+import com.orpheusdroid.screenrecorder.beaconTracker.BeaconTrackerFragment;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 import ly.count.android.sdk.Countly;
@@ -257,6 +255,7 @@ public class MainActivity extends AppCompatActivity {
     ViewPagerAdapter adapter = new ViewPagerAdapter(getFragmentManager());
     adapter.addFragment(new SettingsPreferenceFragment(), getString(R.string.tab_settings_title));
     adapter.addFragment(new VideosListFragment(), getString(R.string.tab_videos_title));
+    adapter.addFragment(new BeaconTrackerFragment(), getString(R.string.tab_beacon_title));
     viewPager.setAdapter(adapter);
     viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
       @Override

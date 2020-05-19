@@ -1,6 +1,5 @@
 package com.orpheusdroid.screenrecorder;
 
-import android.support.design.widget.TabLayout;
 import android.util.Log;
 
 import org.json.JSONArray;

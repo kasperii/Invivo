@@ -58,10 +58,10 @@ import android.os.Message;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.FileProvider;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.FileProvider;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseIntArray;
@@ -476,6 +476,7 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
             video.setLocationGranted(Boolean.TRUE);
             getLastLocation();
         }
+
 
         video.setUserID(getAndroidID());
         startVideoTime = System.currentTimeMillis(); // video start time

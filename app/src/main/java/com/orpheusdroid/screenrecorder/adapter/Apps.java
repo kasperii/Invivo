@@ -18,7 +18,7 @@
 package com.orpheusdroid.screenrecorder.adapter;
 
 import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * Created by vijai on 08-12-2017.

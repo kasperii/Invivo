@@ -152,4 +152,19 @@
             android:visibility="invisible"
             android:selectable="false"/>
     </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/prefs_category_beacon_title"
+        >
+        <CheckBoxPreference
+            android:title="@string/preference_act_beac_title"
+            android:summary="@string/preference_act_beac_summary"
+            android:key="@string/preference_act_beac_key"
+            android:defaultValue="false"
+            />
+        <Preference
+            android:title=""
+            android:summary=""
+            android:visibility="invisible"
+            android:selectable="false"/>
+    </PreferenceCategory>
 </PreferenceScreen>
