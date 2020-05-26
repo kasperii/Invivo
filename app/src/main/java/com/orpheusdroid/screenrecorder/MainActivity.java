@@ -57,6 +57,7 @@ import android.widget.Toast;
 import com.orpheusdroid.screenrecorder.beaconTracker.BeaconTrackerFragment;
 
 import java.io.BufferedReader;
+import java.io.Console;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -66,6 +67,8 @@ import java.util.List;
 
 import ly.count.android.sdk.Countly;
 import ly.count.android.sdk.DeviceId;
+
+import static java.lang.Boolean.parseBoolean;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -87,11 +90,20 @@ public class MainActivity extends AppCompatActivity {
 
   //Method to create app directory which is default directory for storing recorded videos
   public static void createDir() {
-    File appDir = new File(Environment.getExternalStorageDirectory() + File.separator + Const.APPDIR);
-    if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED) && !appDir.isDirectory()) {
-      appDir.mkdirs();
+    //TODO: ADD SUPPORT FOR version 28
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
+      File appDir = new File(Environment.getExternalStorageDirectory() + File.separator + Const.APPDIR);
+      if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED) && !appDir.isDirectory()) {
+        appDir.mkdirs();
+      }}else{
+      File appDir = new File(Environment.getExternalStorageDirectory() + File.separator + Const.APPDIR);
+      if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED) && !appDir.isDirectory()) {
+        boolean x = appDir.mkdirs();
+        Log.d("is: ", String.valueOf(x));
+        //CHECK NULL=?
+
     }
-  }
+  }}
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {

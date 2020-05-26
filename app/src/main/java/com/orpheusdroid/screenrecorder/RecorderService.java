@@ -553,6 +553,17 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
     private void startRecording() {
         //Initialize MediaRecorder class and initialize it with preferred configuration
 
+        startTime = System.currentTimeMillis();
+        Intent recordPauseIntent = new Intent(this, RecorderService.class);
+        recordPauseIntent.setAction(Const.SCREEN_RECORDING_SKIP);
+        PendingIntent precordPauseIntent = PendingIntent.getService(this, 0, recordPauseIntent, 0);
+        NotificationCompat.Action action = new NotificationCompat.Action(0,
+        getString(R.string.screen_recording_notification_action_pause), precordPauseIntent);
+
+        //Start Notification as foreground
+        startNotificationForeGround(createRecordingNotification(action, Const.SCREEN_RECORDING_START).build(), Const.SCREEN_RECORDER_NOTIFICATION_ID);
+
+
         mMediaRecorder = new MediaRecorder();
         initRecorder();
 
@@ -562,7 +573,10 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
 
         Log.d(Const.TAG, "Value of data" + String.valueOf(data));
 
+
         //Initialize MediaProjection using data received from Intent
+
+
         mMediaProjection = mProjectionManager.getMediaProjection(result, data);
         mMediaProjection.registerCallback(mMediaProjectionCallback, null);
 
@@ -604,16 +618,19 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
          * Notification with only default stop() action
          * I did not include pause in this code */
 
-            //startTime is to calculate elapsed recording time to update notification during pause/resume
-            startTime = System.currentTimeMillis();
-            Intent recordPauseIntent = new Intent(this, RecorderService.class);
-            recordPauseIntent.setAction(Const.SCREEN_RECORDING_SKIP);
-            PendingIntent precordPauseIntent = PendingIntent.getService(this, 0, recordPauseIntent, 0);
-            NotificationCompat.Action action = new NotificationCompat.Action(0,
-                    getString(R.string.screen_recording_notification_action_pause), precordPauseIntent);
 
-            //Start Notification as foreground
-            startNotificationForeGround(createRecordingNotification(action, Const.SCREEN_RECORDING_START).build(), Const.SCREEN_RECORDER_NOTIFICATION_ID);
+        //This has been moved up for version 10 - now the notification is created before MediaRecorder
+
+//            //startTime is to calculate elapsed recording time to update notification during pause/resume
+//            startTime = System.currentTimeMillis();
+//            Intent recordPauseIntent = new Intent(this, RecorderService.class);
+//            recordPauseIntent.setAction(Const.SCREEN_RECORDING_SKIP);
+//            PendingIntent precordPauseIntent = PendingIntent.getService(this, 0, recordPauseIntent, 0);
+//            NotificationCompat.Action action = new NotificationCompat.Action(0,
+//                    getString(R.string.screen_recording_notification_action_pause), precordPauseIntent);
+//
+//            //Start Notification as foreground
+//            startNotificationForeGround(createRecordingNotification(action, Const.SCREEN_RECORDING_START).build(), Const.SCREEN_RECORDER_NOTIFICATION_ID);
 
     }
 
@@ -990,4 +1007,5 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
             stopScreenSharing();
         }
     }
+    //TODO: implement onOpenPhone,onClosePhone,onEnterRegion,onExitRegion
 }

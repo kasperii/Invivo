@@ -13,6 +13,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.orpheusdroid.screenrecorder.App;
+import com.orpheusdroid.screenrecorder.Const;
 import com.orpheusdroid.screenrecorder.MyNotification;
 import com.orpheusdroid.screenrecorder.R;
 import com.orpheusdroid.screenrecorder.RecorderService;
@@ -268,7 +269,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
 
 
-
+    //this calls the updateBeaconView if there is an instance of the fragment
     public void updateBeaconView(Beacon firstBeacon){
         if(this.BeaconTrackerFragment != null) {
             this.BeaconTrackerFragment.updateBeaconView(firstBeacon);
@@ -302,6 +303,22 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         return (average < threshold);
         //TODO: Implement that this looks at how close it has been on average, and how close the threshold areas are
     }
+
+    //TODO: Add send Enter Broadcast method
+    public void sendEnterBroadcast(){
+        Intent intent = new Intent();
+        intent.setAction(Const.ACTION_ENTER_BEACON);
+        sendBroadcast(intent);
+        //TODO: should I add debug - or save value option so I can see that the state is changed!
+
+    }
+    public void sendExitBroadcast(){
+        Intent intent = new Intent();
+        intent.setAction(Const.ACTION_EXIT_BEACON);
+        sendBroadcast(intent);
+
+    }
+    //TODO: Add send Exit Broadcast method
 
     // once called the screen recorder is sent and intent to SKIP recording
     public void stopRecordingCall(){
@@ -339,5 +356,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     public void rangingActivation(){
         rangingActivated = true;
     }
+
+
 
 }

@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+//TODO: edit name to StateReceiver
 public class ScreenReceiver extends BroadcastReceiver {
     private boolean isRecording;
 
@@ -25,4 +26,8 @@ public class ScreenReceiver extends BroadcastReceiver {
             context.startService(recordSkipIntent);
         }
     }
+
+    //TODO: add if Intent.ACTION_ENTER_BEACON
+    //TODO: add if Intent.ACTION_EXIT_BEACON
+    //these values should be stored in application instance maybe? where can the last state be stored?
 }

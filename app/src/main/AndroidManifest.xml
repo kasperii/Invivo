@@ -42,10 +42,11 @@
 
     <!-- Needed only if your app targets Android 5.0 (API level 21) or higher. -->
     <uses-feature android:name="android.hardware.location.gps" />
-    <protected-broadcast android:name="com.motorola.location.instrumentation" />
+    <protected-broadcast android:name="com.motorola.location.instrumenScreenReceivertation" />
 
     <application
         android:name=".beaconTracker.BeaconRecorderApplication"
+        android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -86,6 +87,7 @@
         <service
             android:name=".RecorderService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:foregroundServiceType="mediaProjection"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />

@@ -173,6 +173,7 @@ public class FolderChooser extends DialogPreference implements View.OnClickListe
     }
 
     private void generateFoldersList() {
+        //TODO: bug if already existing files?
         File[] dir = currentDir.listFiles(new DirectoryFilter());
         directories = new ArrayList<>(Arrays.asList(dir));
         Collections.sort(directories, new SortFileName());
