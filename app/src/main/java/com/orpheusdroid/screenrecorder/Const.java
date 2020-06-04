@@ -78,8 +78,6 @@ public class Const {
     static final String ANALYTICS_URL = "https://analytics.orpheusdroid.com";
     static final String ANALYTICS_API_KEY = "07273a5c91f8a932685be1e3ad0d160d3de6d4ba";
 
-    //BEACON
-    //TODO: this can be problem - maybe has to be added to manifest? Why does they have to be public?
     public static final String ACTION_ENTER_BEACON = "com.orpheusdroid.screenrecorder.ACTION_ENTER_BEACON";
     public static final String ACTION_EXIT_BEACON = "com.orpheusdroid.screenrecorder.ACTION_EXIT_BEACON";
 

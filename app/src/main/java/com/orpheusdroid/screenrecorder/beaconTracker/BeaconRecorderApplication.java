@@ -7,6 +7,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.RemoteException;
 import android.util.Log;
@@ -28,6 +29,7 @@ import org.altbeacon.beacon.service.RunningAverageRssiFilter;
 import org.altbeacon.beacon.startup.BootstrapNotifier;
 import org.altbeacon.beacon.startup.RegionBootstrap;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -51,6 +53,11 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     public double threshold = 5;
     private boolean rangingActivated = false;
     private boolean isRecording = true;
+    SharedPreferences statePrefs;
+
+    public ArrayList<TrackedBeacon> trackedBeacons;
+    public ArrayList<TrackedArea> trackedAreas;
+
 
 
     // these class fields are used for the rolling average calculation
@@ -61,6 +68,13 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     public void onCreate() {
         super.onCreate();
         beaconManager = org.altbeacon.beacon.BeaconManager.getInstanceForApplication(this);
+
+        //Get shared preferences for registering state change
+        statePrefs = getSharedPreferences("State", Context.MODE_PRIVATE);
+
+        //TODO: create trackedBeacons; = new ArrayList<trackedBeacons>(); if not in statePrefs
+        trackedBeacons = new ArrayList<TrackedBeacon>();
+        trackedAreas = new ArrayList<TrackedArea>();
 
         // By default the AndroidBeaconLibrary will only find AltBeacons.  If you wish to make it
         // find a different type of beacon, you must specify the byte layout for that beacon's
@@ -220,8 +234,28 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
                 for (Beacon beacon: beacons) {
 
+                    if(!trackedBeacons.isEmpty()) {
+                        boolean found = false;
+                        for (TrackedBeacon b : trackedBeacons) {
+                            if (b.equalId(beacon.getIdentifiers())) {
+                                b.updateBeaconObject(beacon);
+                                Log.d(TAG, "same uuid: " + b.getUuid());
+                                found = true;
+                                break;
+                            }
+                        }
+                        if(!found){
+                            TrackedBeacon newTrackedBeacon = new TrackedBeacon(beacon);
+                            trackedBeacons.add(newTrackedBeacon);
+                        }
+
+                    }else{
+                                TrackedBeacon newTrackedBeacon = new TrackedBeacon(beacon);
+                                trackedBeacons.add(newTrackedBeacon);
+                    }
+
                     //TODO: should I record?
-                        if(shouldIRecord(beacon.getDistance())){
+                        if(shouldIRecord(beacon)){
                             //makeToastHere("inside 5 meters ");
                             Log.d(TAG, "I see a beacon that is less than 5 meters away.");
                             //TODO: send data back to application?
@@ -241,10 +275,10 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
                     Beacon firstBeacon = beacons.iterator().next();
                     if(rangingActivated) {
 
-                        //updateBeaconView(firstBeacon);
+                        updateBeaconView();
                     }
                     Log.d(TAG, "The first beacon " + firstBeacon.toString() + " is about " + firstBeacon.getDistance() + " meters away.");
-                    makeToastHere("The first beacon " + firstBeacon.toString() + " is about " + firstBeacon.getDistance() + " meters away.");
+                    //makeToastHere("The first beacon " + firstBeacon.toString() + " is about " + firstBeacon.getDistance() + " meters away.");
                   //TODO: eval if recording should restart.
 
 
@@ -270,9 +304,9 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
 
     //this calls the updateBeaconView if there is an instance of the fragment
-    public void updateBeaconView(Beacon firstBeacon){
+    public void updateBeaconView(){
         if(this.BeaconTrackerFragment != null) {
-            this.BeaconTrackerFragment.updateBeaconView(firstBeacon);
+            this.BeaconTrackerFragment.updateBeaconView();
         }
     }
 
@@ -283,9 +317,9 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
 
     // this methods uses an heuristic evaluation to see if the recorder should be called
-    public boolean shouldIRecord(double dist){
+    public boolean shouldIRecord(Beacon foundBeacon){
 
-
+        Double dist = foundBeacon.getDistance();
         //the distance is added to a queue, where only the last 10 are, by removing and adding
         //it calculates the average distance.
 
@@ -306,16 +340,17 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
     //TODO: Add send Enter Broadcast method
     public void sendEnterBroadcast(){
-        Intent intent = new Intent();
-        intent.setAction(Const.ACTION_ENTER_BEACON);
-        sendBroadcast(intent);
+//        Intent intent = new Intent();
+//        intent.setAction(Const.ACTION_ENTER_BEACON);
+//        sendBroadcast(intent);
+        //TODO: SEND UPDATE TO PREFERENCE AND ACTIVATE state change service instead (with logic)
         //TODO: should I add debug - or save value option so I can see that the state is changed!
 
     }
     public void sendExitBroadcast(){
-        Intent intent = new Intent();
-        intent.setAction(Const.ACTION_EXIT_BEACON);
-        sendBroadcast(intent);
+//        Intent intent = new Intent();
+//        intent.setAction(Const.ACTION_EXIT_BEACON);
+//        sendBroadcast(intent);
 
     }
     //TODO: Add send Exit Broadcast method
@@ -329,9 +364,11 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
     // once called the screen recorder is sent and intent to START recording
     public void startRecordingResetCall(){
-        Intent startIntent = new Intent(this, RecorderService.class);
-        startIntent.setAction("com.orpheusdroid.screenrecorder.services.action.restartrecording");
-        this.startService(startIntent);
+        sendEnterBroadcast();
+//
+//        Intent startIntent = new Intent(this, RecorderService.class);
+//        startIntent.setAction("com.orpheusdroid.screenrecorder.services.action.restartrecording");
+//        this.startService(startIntent);
     }
 
     // this method allows the beaconTrackerFragment, once instanced, to send the context to this application
@@ -355,6 +392,24 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     }
     public void rangingActivation(){
         rangingActivated = true;
+    }
+
+    //TODO: this function will read all "tracked beacon" objects and add them to the recycle view
+    private void loadTrackedObjects(){
+        //statePrefs
+        //1. look for tracked beacon object list in shared pref
+        //2. look for tracked locations
+    }
+
+    private void changeTrackedObjects(){
+        //1. store the tracked beacon object list in shared pref
+        //2. store the look for tracked locations
+    }
+    public ArrayList<TrackedBeacon> getTrackedBeacons(){
+        return trackedBeacons;
+    }
+    public ArrayList<TrackedArea> getTrackedAreas(){
+        return trackedAreas;
     }
 
 

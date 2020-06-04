@@ -18,17 +18,24 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-<!--    <android.support.v7.widget.RecyclerView-->
-<!--        android:id="@+id/list_of_Beacons"-->
-<!--        android:scrollbars="vertical"-->
-<!--        android:layout_below="@+id/RecycleViewTitle"-->
-<!--        android:layout_marginLeft="8dp"-->
-<!--        android:layout_marginRight="8dp"-->
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/list_of_Beacons"
+        android:scrollbars="vertical"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_height="200dp"
+        android:layout_width="match_parent"
+        >
+
+    </androidx.recyclerview.widget.RecyclerView>
+
+
+<!--    </android.support.v7.widget.RecyclerView>-->
 
 
 
-<!--        android:layout_height="500px"-->
-<!--        android:layout_width="match_parent" />-->
+
 
 
 <!--    <TextView-->
@@ -48,115 +55,19 @@
 <!--        android:textAppearance="?android:attr/textAppearanceLarge"-->
 <!--        android:textColor="?android:attr/textColorAlertDialogListItem" />-->
 
-    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/recyklerViewReplacement"
-    android:layout_width="match_parent"
-    android:layout_height="?android:attr/listPreferredItemHeightLarge">
 
-
-
-    <TextView
-        android:id="@+id/proximity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_marginEnd="4dp"
-        android:layout_toStartOf="@+id/textView4"
-        android:gravity="center"
-        android:text="X"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:textSize="24sp" />
-
-    <TextView
-        android:id="@+id/textView3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/textView"
-        android:layout_marginStart="102dp"
-        android:layout_marginLeft="4dp"
-        android:layout_marginTop="0dp"
-        android:layout_toEndOf="@+id/textView2"
-        android:gravity="center_vertical"
-        android:text="Minor:"
-        android:textAppearance="@style/TextAppearance.AppCompat.Small"
-        android:textSize="8sp" />
-
-    <TextView
-        android:id="@+id/textView4"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/textView"
-        android:layout_alignParentEnd="true"
-        android:layout_marginLeft="4dp"
-        android:layout_marginTop="-2dp"
-        android:layout_marginEnd="15dp"
-        android:gravity="center_vertical"
-        android:text="RSSI"
-        android:textAppearance="@style/TextAppearance.AppCompat.Small"
-        android:textSize="8sp" />
-
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/textView"
-        android:layout_marginLeft="4dp"
-        android:layout_marginTop="0dp"
-        android:layout_toEndOf="@+id/imageView"
-        android:gravity="center_vertical"
-        android:text="Major:"
-        android:textAppearance="@style/TextAppearance.AppCompat.Small"
-        android:textSize="8sp" />
-
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="wrap_content"
-        android:layout_height="100dp"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentLeft="true"
-        android:layout_marginStart="61dp"
-        android:layout_marginLeft="61dp"
-        android:layout_marginEnd="@dimen/activity_horizontal_margin"
-        android:contentDescription="Icon" />
-
-    <TextView
-        android:id="@+id/beaconName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="0dp"
-        android:layout_toRightOf="@id/imageView"
-        android:gravity="center_vertical"
-        android:text="MacBook Beacon"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:textSize="24sp" />
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/beaconName"
-        android:layout_marginLeft="4dp"
-        android:layout_marginTop="0dp"
-        android:layout_toEndOf="@+id/imageView"
-        android:gravity="center_vertical"
-        android:text="UUID:"
-        android:textAppearance="@style/TextAppearance.AppCompat.Small"
-        android:textSize="8sp" />
-
-</RelativeLayout>
 
 
     <EditText
         android:id="@+id/monitoringText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@+id/list_of_Beacons"
         android:layout_alignParentLeft="true"
-        android:layout_below="@+id/textView1"
-        android:layout_marginTop="36dp"
+        android:layout_marginTop="0dp"
         android:ems="10"
         android:gravity="left|top"
-        android:inputType="textMultiLine" ></EditText>
+        android:inputType="textMultiLine"></EditText>
 
     <Button
         android:id="@+id/enableButton"
@@ -166,16 +77,14 @@
         android:layout_marginStart="0dp"
         android:layout_toEndOf="@id/startRanging"
         android:text="Disable monitoring" />
-
-    <TextView
-        android:layout_below="@+id/recyklerViewReplacement"
-
-        android:id="@+id/textView1"
+    <Button
+        android:id="@+id/addNewBeacon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-
-        android:layout_marginTop="17dp"
-        android:text="Monitoring Events:" />
+        android:layout_below="@+id/monitoringText"
+        android:layout_marginStart="0dp"
+        android:layout_toEndOf="@id/enableButton"
+        android:text="+" />
 
     <requestFocus />
 
@@ -188,5 +97,15 @@
         android:layout_marginLeft="2dp"
         android:text="Start Ranging" />
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/list_of_Areas"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_below="@+id/startRanging"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="38dp"
+        android:layout_marginRight="8dp"
+        android:scrollbars="vertical">
 
+    </androidx.recyclerview.widget.RecyclerView>
 </RelativeLayout>

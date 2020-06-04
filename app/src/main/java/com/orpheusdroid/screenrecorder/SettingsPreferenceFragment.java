@@ -38,6 +38,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.CheckBox;
 import android.widget.Toast;
 
 import com.orpheusdroid.screenrecorder.folderpicker.FolderChooser;
@@ -62,6 +63,7 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Sh
     private CheckBoxPreference usageStats;
     private FolderChooser dirChooser;
     private MainActivity activity;
+    private CheckBoxPreference beaconOn;
 
 
     @Override
@@ -99,6 +101,7 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Sh
         usageStats = (CheckBoxPreference) findPreference(getString(R.string.preference_anonymous_statistics_key));
         //Set previously chosen directory as initial directory
         dirChooser.setCurrentDir(getValue(getString(R.string.savelocation_key), defaultSaveLoc));
+        beaconOn = (CheckBoxPreference) findPreference("@string/preference_act_beac_key");
 
         ListPreference theme = (ListPreference) findPreference(getString(R.string.preference_theme_key));
         theme.setSummary(theme.getEntry());
@@ -136,6 +139,10 @@ public class SettingsPreferenceFragment extends PreferenceFragment implements Sh
         String resolution = getResolution(getValue(getString(R.string.res_key), "1440x2560"));
         res.setValue(resolution);
         res.setSummary(resolution);
+    }
+
+    public boolean isBeaconActivationActive(){
+        return beaconOn.isChecked();
     }
 
     //Prevent upscaling of resolution which mediarecorder could not handle

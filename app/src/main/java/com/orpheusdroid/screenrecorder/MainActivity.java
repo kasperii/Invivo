@@ -339,6 +339,7 @@ public class MainActivity extends AppCompatActivity {
     startService(screenServiceIntent);
     recordingIsON = true;
 
+
   }
 
 

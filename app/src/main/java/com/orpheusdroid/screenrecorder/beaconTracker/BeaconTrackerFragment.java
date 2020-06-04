@@ -21,6 +21,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
+import android.app.Application;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -33,11 +34,15 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.orpheusdroid.screenrecorder.Const;
@@ -48,6 +53,8 @@ import com.orpheusdroid.screenrecorder.RecorderService;
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconManager;
 
+import static android.content.Context.LAYOUT_INFLATER_SERVICE;
+
 /**
  * Created by vijai on 11-10-2016.
  */
@@ -57,17 +64,17 @@ public class BeaconTrackerFragment extends Fragment{
     private static final String TAG = "BeaconReferenceFragment";
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
 	private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
-	private RecyclerView recyclerView;
-    private RecyclerView.Adapter mAdapter;
-    private RecyclerView.LayoutManager layoutManager;
-    TrackedBeaconData[] trackedBeaconsData;
+    private TrackedBeaconAdapter trackedBeaconAdapter;
+    private BeaconRecorderApplication myApp;
     View view;
+
 
 
 
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        myApp = (BeaconRecorderApplication)getActivity().getApplication();
         view = inflater.inflate(R.layout.fragment_beacons, container, false);
 
         Button startRangingButton = (Button) view.findViewById(R.id.startRanging);
@@ -78,6 +85,19 @@ public class BeaconTrackerFragment extends Fragment{
              {
                  onRangingClicked(v);
              }
+        });
+        //Added search for new beacon function
+        Button searchBeacon = (Button) view.findViewById(R.id.addNewBeacon);
+        searchBeacon.setOnClickListener(new View.OnClickListener()
+        {
+             @Override
+             public void onClick(View v)
+             {
+
+                 searchNewBeacon();
+             }
+
+
         });
         Button enableButton = (Button) view.findViewById(R.id.enableButton);
         enableButton.setOnClickListener(new View.OnClickListener()
@@ -90,23 +110,15 @@ public class BeaconTrackerFragment extends Fragment{
         });
 
 
+        // set up the RecyclerView for tracked beacons
+        RecyclerView recyclerView = view.findViewById(R.id.list_of_Beacons);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
+        // set up the RecyclerView for tracked areas - hardcoded to bed for now
 
-        //
-//        recyclerView.setHasFixedSize(true);
-//        layoutManager = new LinearLayoutManager(getActivity());
-//        recyclerView.setLayoutManager(layoutManager);
-//        TrackedBeaconData[] trackedBeaconData = new TrackedBeaconData[]{
-//                new TrackedBeaconData("Macbook","B0702880-A295-A8AB-F734-031A98A512DF")
-//        };
-        //TODO: get data from application, not hardcoded.
-        //trackedBeaconsData = this.getActivity().getApplication().getTrackedBeaconsData
-
-//        mAdapter = new beaconAddapter(trackedBeaconData);
-//        recyclerView.setAdapter(mAdapter);
-
-        //Here is hardcode example text:
-
+        trackedBeaconAdapter = new TrackedBeaconAdapter(getContext(), myApp.getTrackedBeacons());
+        //trackedBeaconAdapter.setClickListener(getActivity());
+        recyclerView.setAdapter(trackedBeaconAdapter);
 
 
 
@@ -326,18 +338,36 @@ public class BeaconTrackerFragment extends Fragment{
         });
 
     }
-    public void updateBeaconView(Beacon firstBeacon){
-        final int mRssi = firstBeacon.getRssi();
+    public void updateBeaconView(){
+        trackedBeaconAdapter.notifyDataSetChanged();
+    }
 
-        getActivity().runOnUiThread(new Runnable() {
-            @SuppressLint("SetTextI18n")
-            public void run() {
-                TextView textView = (TextView)BeaconTrackerFragment.this.getView()
-                        .findViewById(R.id.proximity);
-                textView.setText(Integer.toString(mRssi));
+    public void searchNewBeacon(){
+        // inflate the layout of the popup window
+        LayoutInflater inflater = (LayoutInflater)
+                getActivity().getSystemService(LAYOUT_INFLATER_SERVICE);
+        View popupView = inflater.inflate(R.layout.popup_beacon_search_window, null);
+
+        // create the popup window
+        int width = LinearLayout.LayoutParams.WRAP_CONTENT;
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+        boolean focusable = true; // lets taps outside the popup also dismiss it
+        final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
+
+        // show the popup window
+        // which view you pass in doesn't matter, it is only used for the window tolken
+        popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
+
+        // dismiss the popup window when touched
+        popupView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                popupWindow.dismiss();
+                return true;
             }
         });
     }
+
 
 
     }

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="?android:attr/listPreferredItemHeightLarge"
+    android:id="@+id/area_row_item">
+    <TextView
+            android:id="@+id/rowAreaName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="0dp"
+            android:layout_toRightOf="@id/rowAreaImage"
+            android:gravity="center_vertical"
+            android:text="Room"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textSize="24sp" />
+
+    <ImageView
+        android:id="@+id/rowAreaImage"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignParentStart="true"
+
+        android:layout_alignParentLeft="true"
+        android:layout_marginStart="0dp"
+        android:layout_marginLeft="0dp"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:contentDescription="Icon"
+        android:src="@drawable/bed" />
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="100dp"
+        android:layout_height="50dp"
+        android:id="@+id/beacon1"
+        android:layout_below="@+id/rowAreaName"
+        android:layout_alignStart="@+id/rowAreaName"
+        android:background="@drawable/layout_button"
+        >
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="beacon"
+            android:gravity="center"></TextView>
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="100dp"
+        android:layout_height="50dp"
+        android:layout_below="@+id/rowAreaName"
+
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd="-112dp"
+        android:layout_toEndOf="@+id/beacon1"
+        android:background="@drawable/layout_button">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="beacon 2"></TextView>
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+</RelativeLayout>

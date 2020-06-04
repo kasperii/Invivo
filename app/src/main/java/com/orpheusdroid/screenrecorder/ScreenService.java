@@ -20,6 +20,7 @@ public class ScreenService extends Service{
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         sReceiver = new ScreenReceiver();
         registerReceiver(sReceiver, filter);
+        //Add reference to sharedpreferences;
         return START_STICKY;
     }
 
