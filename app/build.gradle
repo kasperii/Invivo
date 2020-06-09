@@ -83,6 +83,7 @@ dependencies {
     implementation 'io.tus.java.client:tus-java-client:0.4.1'
     implementation "com.google.android.gms:play-services-location:15.0.1"
     implementation 'com.google.code.gson:gson:2.8.6'
+    implementation "androidx.preference:preference:1.1.1"
 
 //added for beacon
     implementation 'androidx.appcompat:appcompat:1.1.0'

@@ -65,6 +65,7 @@ public class BeaconTrackerFragment extends Fragment{
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
 	private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
     private TrackedBeaconAdapter trackedBeaconAdapter;
+    private TrackedAreaAdapter trackedAreaAdapter;
     private BeaconRecorderApplication myApp;
     View view;
 
@@ -77,29 +78,8 @@ public class BeaconTrackerFragment extends Fragment{
         myApp = (BeaconRecorderApplication)getActivity().getApplication();
         view = inflater.inflate(R.layout.fragment_beacons, container, false);
 
-        Button startRangingButton = (Button) view.findViewById(R.id.startRanging);
-        startRangingButton.setOnClickListener(new View.OnClickListener()
-        {
-             @Override
-             public void onClick(View v)
-             {
-                 onRangingClicked(v);
-             }
-        });
-        //Added search for new beacon function
-        Button searchBeacon = (Button) view.findViewById(R.id.addNewBeacon);
-        searchBeacon.setOnClickListener(new View.OnClickListener()
-        {
-             @Override
-             public void onClick(View v)
-             {
 
-                 searchNewBeacon();
-             }
-
-
-        });
-        Button enableButton = (Button) view.findViewById(R.id.enableButton);
+        Button enableButton = (Button) view.findViewById(R.id.monitoringSwitch);
         enableButton.setOnClickListener(new View.OnClickListener()
         {
              @Override
@@ -111,14 +91,19 @@ public class BeaconTrackerFragment extends Fragment{
 
 
         // set up the RecyclerView for tracked beacons
-        RecyclerView recyclerView = view.findViewById(R.id.list_of_Beacons);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-
-        // set up the RecyclerView for tracked areas - hardcoded to bed for now
+        RecyclerView recyclerViewBeacon = view.findViewById(R.id.list_of_Beacons);
+        recyclerViewBeacon.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         trackedBeaconAdapter = new TrackedBeaconAdapter(getContext(), myApp.getTrackedBeacons());
         //trackedBeaconAdapter.setClickListener(getActivity());
-        recyclerView.setAdapter(trackedBeaconAdapter);
+        recyclerViewBeacon.setAdapter(trackedBeaconAdapter);
+
+
+        // set up the RecyclerView for tracked areas
+        RecyclerView recyclerViewArea = view.findViewById(R.id.list_of_Areas);
+        recyclerViewArea.setLayoutManager(new LinearLayoutManager(getActivity()));
+        trackedAreaAdapter = new TrackedAreaAdapter(getContext(), myApp.getTrackedAreas(), myApp.getTrackedBeacons());
+        recyclerViewArea.setAdapter(trackedAreaAdapter);
 
 
 
@@ -257,21 +242,18 @@ public class BeaconTrackerFragment extends Fragment{
         verifyBluetooth();
     }
 
-    public void onRangingClicked(View view) {
-        ((BeaconRecorderApplication) getActivity().getApplication()).rangingActivation();
-//        Intent myIntent = new Intent(this.getActivity(), RangingService.class);
-//        this.getActivity().startService(myIntent);
-    }
 
     public void onEnableClicked(View view) {
         BeaconRecorderApplication application = ((BeaconRecorderApplication) this.getActivity().getApplicationContext());
         if (BeaconManager.getInstanceForApplication(this.getActivity()).getMonitoredRegions().size() > 0) {
             application.disableMonitoring();
-                ((Button)getView().findViewById(R.id.enableButton)).setText("Re-Enable Monitoring");
+            getView().setAlpha(0.4f);
+            //((Button)getView().findViewById(R.id.monitoringSwitch));
         }
         else {
-            ((Button)getView().findViewById(R.id.enableButton)).setText("Disable Monitoring");
+            //((Button)getView().findViewById(R.id.monitoringSwitch)).setText("Disable Monitoring");
             application.enableMonitoring();
+            getView().setAlpha(1f);
         }
 
     }
@@ -281,7 +263,6 @@ public class BeaconTrackerFragment extends Fragment{
         super.onResume();
         BeaconRecorderApplication application = ((BeaconRecorderApplication) this.getActivity().getApplicationContext());
         application.setBeaconTrackerFragment(this);
-        updateLog(application.getLog());
     }
 
     @Override
@@ -328,18 +309,9 @@ public class BeaconTrackerFragment extends Fragment{
 
     }
 
-    public void updateLog(final String log) {
-        getActivity().runOnUiThread(new Runnable() {
-            public void run() {
-                EditText editText = (EditText)BeaconTrackerFragment.this.getView()
-                        .findViewById(R.id.monitoringText);
-                editText.setText(log);
-            }
-        });
-
-    }
     public void updateBeaconView(){
         trackedBeaconAdapter.notifyDataSetChanged();
+        trackedAreaAdapter.notifyDataSetChanged();
     }
 
     public void searchNewBeacon(){

@@ -6,8 +6,10 @@ import androidx.annotation.Nullable;
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.Identifier;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,6 +22,7 @@ public class TrackedBeacon {
     private int major;
     private int[] room;
     private Beacon myBeaconObject;
+    public Long lastSeen;
     //this is an array with pointers to TrackedArea
     public ArrayList<TrackedArea> trackedAreas;
 
@@ -31,10 +34,21 @@ public class TrackedBeacon {
         myBeaconObject = beaconObject;
         mIdentifiers = myBeaconObject.getIdentifiers();
         this.uuid = mIdentifiers.get(0).toHexString();
+        description = "Nameless beacon";
+        trackedAreas = new ArrayList<>();
     }
 
     public void updateBeaconObject(Beacon beaconObject) {
+        this.lastSeen();
         myBeaconObject = beaconObject;
+    }
+
+    public void lastSeen(){
+        lastSeen = new Date().getTime();
+
+    }
+    public Long whenLastSeen(){
+        return new Date().getTime() - lastSeen;
     }
 
     public String getDescription() {

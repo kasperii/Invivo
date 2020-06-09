@@ -74,6 +74,7 @@
             </intent-filter>
 
 
+
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_MOUNTED" />
                 <data android:scheme="file" />
@@ -133,6 +134,7 @@
             android:name=".PrivacyPolicy"
             android:label="Privacy Policy" />
         <activity android:name=".EditVideoActivity" />
+
         <service android:name="org.altbeacon.beacon.service.BeaconService"
             tools:node="replace">
             <meta-data android:name="longScanForcingEnabled" android:value="true"/>

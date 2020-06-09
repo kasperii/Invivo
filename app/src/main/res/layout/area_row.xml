@@ -2,8 +2,9 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="?android:attr/listPreferredItemHeightLarge"
+    android:layout_height="120dp"
     android:id="@+id/area_row_item">
+
     <TextView
             android:id="@+id/rowAreaName"
             android:layout_width="wrap_content"
@@ -18,50 +19,105 @@
 
     <ImageView
         android:id="@+id/rowAreaImage"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_alignParentStart="true"
 
         android:layout_alignParentLeft="true"
-        android:layout_marginStart="0dp"
-        android:layout_marginLeft="0dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:contentDescription="Icon"
-        android:src="@drawable/bed" />
+        android:src="@drawable/ic_vector_room" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
-        android:layout_width="100dp"
-        android:layout_height="50dp"
+        android:layout_width="200dp"
+        android:layout_height="25dp"
         android:id="@+id/beacon1"
         android:layout_below="@+id/rowAreaName"
-        android:layout_alignStart="@+id/rowAreaName"
-        android:background="@drawable/layout_button"
-        >
+        android:layout_alignStart="@+id/rowAreaName">
+        <Button
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:id="@+id/statusBeacon1"
+            android:background="@drawable/beacon_lost"
+            android:layout_gravity="center"/>
+
         <TextView
+            android:id="@+id/beacon1text"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:text="beacon"
-            android:gravity="center"></TextView>
+            android:gravity="center"/>
+
     </androidx.appcompat.widget.LinearLayoutCompat>
 
 
     <androidx.appcompat.widget.LinearLayoutCompat
-        android:layout_width="100dp"
-        android:layout_height="50dp"
-        android:layout_below="@+id/rowAreaName"
-
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="0dp"
-        android:layout_marginEnd="-112dp"
-        android:layout_toEndOf="@+id/beacon1"
-        android:background="@drawable/layout_button">
+        android:id="@+id/beacon2"
+        android:layout_width="200dp"
+        android:layout_height="25dp"
+        android:layout_below="@+id/beacon1"
+        android:layout_alignStart="@+id/rowAreaName">
+        <Button
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:id="@+id/statusBeacon2"
+            android:background="@drawable/beacon_lost"
+            android:layout_gravity="center"/>
 
         <TextView
+            android:id="@+id/beacon2text"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="beacon 2"></TextView>
+            android:text="beacon 2" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/beacon3"
+        android:layout_width="200dp"
+        android:layout_height="25dp"
+        android:layout_below="@+id/beacon2"
 
+        android:layout_alignStart="@+id/rowAreaName">
+        <Button
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:id="@+id/statusBeacon3"
+            android:background="@drawable/beacon_lost"
+            android:layout_gravity="center"/>
+
+        <TextView
+            android:id="@+id/beacon3text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="beacon 3" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <Button
+        android:id="@+id/addNewBeaconToArea"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="0dp"
+
+        android:layout_marginEnd="20dp"
+        android:background="@drawable/layout_button"
+        android:text="+"
+        android:textAlignment="center" />
+
+    <Button
+        android:id="@+id/syncBeaconsInArea"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+
+
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="10dp"
+        android:layout_toStartOf="@+id/addNewBeaconToArea"
+        android:background="@drawable/layout_button"
+        android:text="s"
+        android:textAlignment="center" />
 </RelativeLayout>

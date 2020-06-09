@@ -29,9 +29,11 @@ import org.altbeacon.beacon.service.RunningAverageRssiFilter;
 import org.altbeacon.beacon.startup.BootstrapNotifier;
 import org.altbeacon.beacon.startup.RegionBootstrap;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -50,13 +52,14 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     private RangingService MonitoringService;
     private RangeNotifier myRangeNotifier;
     private BeaconTrackerFragment BeaconTrackerFragment;
-    public double threshold = 5;
-    private boolean rangingActivated = false;
+    private boolean BeaconRecordingActivated = false;
     private boolean isRecording = true;
     SharedPreferences statePrefs;
 
     public ArrayList<TrackedBeacon> trackedBeacons;
     public ArrayList<TrackedArea> trackedAreas;
+
+    public boolean monitoring = true;
 
 
 
@@ -75,6 +78,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         //TODO: create trackedBeacons; = new ArrayList<trackedBeacons>(); if not in statePrefs
         trackedBeacons = new ArrayList<TrackedBeacon>();
         trackedAreas = new ArrayList<TrackedArea>();
+        createHardCodedBedroomArea();
 
         // By default the AndroidBeaconLibrary will only find AltBeacons.  If you wish to make it
         // find a different type of beacon, you must specify the byte layout for that beacon's
@@ -142,6 +146,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
         Log.d(TAG, "setting up background monitoring for beacons and power saving");
         // wake up the app when a beacon is seen - DISABLED before activation
+        monitoring = true;
         Region region = new Region("backgroundRegion", null, null, null);
         regionBootstrap = new RegionBootstrap(this, region);
 
@@ -155,12 +160,14 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     public void disableMonitoring() {
         //makeToastHere("disable monitoring");
         if (regionBootstrap != null) {
+            monitoring = false;
             regionBootstrap.disable();
             regionBootstrap = null;
         }
     }
     public void enableMonitoring() {
         makeToastHere("enable monitoring");
+        monitoring = true;
         Region region = new Region("backgroundRegion",
                 null, null, null);
         regionBootstrap = new RegionBootstrap(this, region);
@@ -197,7 +204,6 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     @Override
     public void didExitRegion(Region region) {
         makeToastHere("exit region");
-        logToDisplay("I no longer see a beacon.");
         //MyNotification.createNotification(this, createStringOut("didExitRegion"), "testString");
     }
 
@@ -205,12 +211,13 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     @Override
     public void didDetermineStateForRegion(int state, Region region) {
         makeToastHere("Current region state is: " + (state == 1 ? "INSIDE" : "OUTSIDE ("+state+")"));
-        logToDisplay("Current region state is: " + (state == 1 ? "INSIDE" : "OUTSIDE ("+state+")"));
+        //logToDisplay("Current region state is: " + (state == 1 ? "INSIDE" : "OUTSIDE ("+state+")"));
+        //change this to show in notification or UI
         if(state == 1){
-            //TODO: call ranging service?
             startRanging();
         }
         else {
+            updateBeaconView();
             //TODO: stop recording here!
             try {
                 stopRecordingCall();
@@ -236,11 +243,28 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
                     if(!trackedBeacons.isEmpty()) {
                         boolean found = false;
+                        //identify if this beacon that is found is tracked
                         for (TrackedBeacon b : trackedBeacons) {
                             if (b.equalId(beacon.getIdentifiers())) {
                                 b.updateBeaconObject(beacon);
                                 Log.d(TAG, "same uuid: " + b.getUuid());
                                 found = true;
+
+                                if(shouldIRecord(b)){
+                                    //makeToastHere("inside 5 meters ");
+                                    Log.d(TAG, "I see a beacon that is less than 5 meters away.");
+                                    //TODO: send data back to application?
+                                    if(BeaconRecordingActivated) {
+                                        if(!isRecording) {
+                                            isRecording = true;
+                                            startRecordingResetCall();
+                                        }
+                                    }
+                                }else{
+                                    stopRecordingCall();
+                                    isRecording = false;
+                                }
+
                                 break;
                             }
                         }
@@ -254,29 +278,12 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
                                 trackedBeacons.add(newTrackedBeacon);
                     }
 
-                    //TODO: should I record?
-                        if(shouldIRecord(beacon)){
-                            //makeToastHere("inside 5 meters ");
-                            Log.d(TAG, "I see a beacon that is less than 5 meters away.");
-                            //TODO: send data back to application?
-                            if(rangingActivated) {
-                                if(!isRecording) {
-                                    isRecording = true;
-                                    startRecordingResetCall();
-                                }
-                            }
-                        }else{
-                            stopRecordingCall();
-                            isRecording = false;
-                        }
                 }
+
+                updateBeaconView();
                 if (beacons.size() > 0) {
                   //Log.d(TAG, "didRangeBeaconsInRegion called with beacon count:  "+beacons.size());
                     Beacon firstBeacon = beacons.iterator().next();
-                    if(rangingActivated) {
-
-                        updateBeaconView();
-                    }
                     Log.d(TAG, "The first beacon " + firstBeacon.toString() + " is about " + firstBeacon.getDistance() + " meters away.");
                     //makeToastHere("The first beacon " + firstBeacon.toString() + " is about " + firstBeacon.getDistance() + " meters away.");
                   //TODO: eval if recording should restart.
@@ -317,9 +324,9 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
 
     // this methods uses an heuristic evaluation to see if the recorder should be called
-    public boolean shouldIRecord(Beacon foundBeacon){
+    public boolean shouldIRecord(TrackedBeacon foundBeacon){
 
-        Double dist = foundBeacon.getDistance();
+        Double dist = foundBeacon.getProximity();
         //the distance is added to a queue, where only the last 10 are, by removing and adding
         //it calculates the average distance.
 
@@ -334,7 +341,12 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
             average = (10*average-removedDigit+dist)/10;
         }
         Log.d(TAG,"average: "+average);
-        return (average < threshold);
+        for(TrackedArea area: trackedAreas){
+            if (average < area.getThresholdDistance(foundBeacon)){
+                return true;
+            }
+        }
+        return false;
         //TODO: Implement that this looks at how close it has been on average, and how close the threshold areas are
     }
 
@@ -379,20 +391,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
     // logToDisplay is used for debug reasons, if there is an instance of the fragments,
     // then the log is updated in the fragments updateLog method.
-    private void logToDisplay(String line) {
-        cumulativeLog += (line + "\n");
-        if (this.BeaconTrackerFragment != null) {
-            this.BeaconTrackerFragment.updateLog(cumulativeLog);
-        }
-    }
 
-
-    public String getLog() {
-        return cumulativeLog;
-    }
-    public void rangingActivation(){
-        rangingActivated = true;
-    }
 
     //TODO: this function will read all "tracked beacon" objects and add them to the recycle view
     private void loadTrackedObjects(){
@@ -405,6 +404,12 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         //1. store the tracked beacon object list in shared pref
         //2. store the look for tracked locations
     }
+
+    private void createHardCodedBedroomArea(){
+        TrackedArea newTrackedArea = new TrackedArea("Bedroom");
+        trackedAreas.add(newTrackedArea);
+    }
+
     public ArrayList<TrackedBeacon> getTrackedBeacons(){
         return trackedBeacons;
     }
@@ -412,6 +417,8 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         return trackedAreas;
     }
 
+
+    public boolean getMonitoring() {return monitoring;}
 
 
 }

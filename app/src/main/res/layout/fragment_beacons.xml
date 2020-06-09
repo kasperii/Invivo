@@ -19,14 +19,22 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <Switch
+        android:id="@+id/monitoringSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:checked="true"/>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/list_of_Beacons"
-        android:scrollbars="vertical"
-        android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp"
-        android:layout_height="200dp"
         android:layout_width="match_parent"
-        >
+        android:layout_height="200dp"
+        android:layout_below="@+id/monitoringSwitch"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginRight="8dp"
+        android:scrollbars="vertical">
 
     </androidx.recyclerview.widget.RecyclerView>
 
@@ -58,50 +66,24 @@
 
 
 
-    <EditText
-        android:id="@+id/monitoringText"
-        android:layout_width="match_parent"
+
+    <TextView
+        android:id="@+id/areaText"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/list_of_Beacons"
-        android:layout_alignParentLeft="true"
-        android:layout_marginTop="0dp"
-        android:ems="10"
-        android:gravity="left|top"
-        android:inputType="textMultiLine"></EditText>
-
-    <Button
-        android:id="@+id/enableButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/monitoringText"
-        android:layout_marginStart="0dp"
-        android:layout_toEndOf="@id/startRanging"
-        android:text="Disable monitoring" />
-    <Button
-        android:id="@+id/addNewBeacon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/monitoringText"
-        android:layout_marginStart="0dp"
-        android:layout_toEndOf="@id/enableButton"
-        android:text="+" />
-
-    <requestFocus />
-
-    <Button
-        android:id="@+id/startRanging"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/monitoringText"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="2dp"
-        android:text="Start Ranging" />
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="20dp"
+        android:gravity="center_vertical"
+        android:text="Room"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textSize="24sp" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/list_of_Areas"
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:layout_below="@+id/startRanging"
+        android:layout_below="@+id/areaText"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="38dp"
         android:layout_marginRight="8dp"
