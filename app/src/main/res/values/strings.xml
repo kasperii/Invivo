@@ -130,7 +130,7 @@
     <string name="preference_act_beac_title">Beacon activation</string>
     <string name="preference_act_beac_summary">Enable for beacon tracking</string>
     <string name="preference_act_beac_key">beacon_on</string>
-
+    <string name="SearchForArea">Would you like to add an area or a beacon?</string>
 
 
     <plurals name="delete_alert_title">

@@ -34,7 +34,7 @@ import java.net.URLEncoder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
-
+import java.util.Date;
 
 
 import io.tus.android.client.TusPreferencesURLStore;
@@ -45,7 +45,7 @@ import io.tus.java.client.TusUploader;
 
 public class UploaderService extends Service {
 
-    private static final String TAG = "MyService";
+    private static final String TAG = "UploaderService";
 
     private boolean isUploading;
     private boolean isCharging;
@@ -100,9 +100,7 @@ public class UploaderService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
         Log.d(TAG, "Service onStartCommand");
-
         switch (intent.getAction()) {
             case Const.FILE_UPLOADING_START:
                 Log.d(TAG, "Start uploading");
@@ -167,7 +165,11 @@ public class UploaderService extends Service {
             TusUpload upload = new TusUpload(file);
 
             Log.d(TAG, String.valueOf(MyFiles.getFileLength(MyDirectory.path)));
-
+            if(file.length() == 0){
+                //deleting empty files - caused by flickering in recording sessions
+                MyFiles.deleteFile(fileUri, context);
+                resumeUpload();
+            }
             // make sure that the file exits and it is closed
             if (file != null && file.exists()) {
                 Log.d(TAG, "Closed: "+String.valueOf(MyFiles.isClosed(file)));
@@ -180,8 +182,9 @@ public class UploaderService extends Service {
                     MyNotification.createNotification(context, 0, Const.LOOKING_FOR_FILES, Const.WAITING_FILES_CLOSE);
                 }
             } else {
-                beginUpload();
+                resumeUpload();
             }
+            Log.d(TAG, "Should I each here?");
 
         } catch (Exception e) {
             Log.d(TAG + "uploading tus ", e.toString());
@@ -195,33 +198,36 @@ public class UploaderService extends Service {
         private TusClient client;
         private TusUpload upload;
         private Exception exception;
+        private long timestampID;
 
         public UploadTask(UploaderService service, TusClient client, TusUpload upload) {
             this.client = client;
             this.upload = upload;
+            timestampID = new Date().getTime();
         }
 
         @Override
         protected void onPreExecute() {
+            Log.d(TAG + timestampID, "Upload starting.");
             //activity.setPauseButtonEnabled(true);
         }
 
         @Override
         protected void onPostExecute(URL uploadURL) {
             // delete file
-            Log.d(TAG, "Upload finished.");
-            Log.d(TAG, "Upload available at:" + uploadURL.toString());
+            Log.d(TAG + timestampID, "Upload finished.");
+            Log.d(TAG + timestampID, "Upload available at:" + uploadURL.toString());
             MyFiles.deleteFile(fileUri, context);
             isUploading = false;
             isPaused = false;
-            uploadJson(fileName.substring(0,fileName.length()- 4));
+            Log.d(TAG + timestampID, "beginUpload() again");
             beginUpload();
         }
 
         @Override
         protected void onCancelled() {
             if (exception != null) {
-                Log.d(TAG, exception.toString());
+                Log.d(TAG + timestampID, exception.toString());
             }
             // activity.setPauseButtonEnabled(false);
         }
@@ -257,7 +263,7 @@ public class UploaderService extends Service {
             };
             fileObserver.startWatching();
 
-            Log.d(TAG, "Upload: " + progress + " " + fileName);
+            Log.d(TAG + timestampID, "Upload: " + progress + " " + fileName);
             MyNotification.createNotification(context, progress, fileName, Const.UPLOAD);
             if (!isCharging || !isConnected) {
                 MyNotification.createNotification(context, progress, fileName, Const.NO_CHARGER);
@@ -269,6 +275,13 @@ public class UploaderService extends Service {
         @Override
         protected URL doInBackground(Void... params) {
             try {
+                if(file.toString().endsWith(".json")){
+                    uploadJson(fileName.substring(0,fileName.length()- 5));
+
+                    //hardcoded return - not great but makes the onPostExecute print link
+                    // Log.d(TAG, "returning from doInBackground");
+                    return new URL("https://invivo.dsv.su.se/upload.php");
+                }
                 TusUploader uploader = client.resumeOrCreateUpload(upload);
                 long totalBytes = upload.getSize();
                 long uploadedBytes = uploader.getOffset();
@@ -299,6 +312,10 @@ public class UploaderService extends Service {
             } catch (Exception e) {
                 exception = e;
                 Log.d(TAG, "doInBackground exception");
+                if(upload.getSize() == 0){
+                    cancel(true);
+                    return null;
+                }
                 Log.d(TAG, "Upload URL: "+uploaderURL.toString());
                 Log.d(TAG, String.valueOf(e));
                 cancel(true);
@@ -320,7 +337,7 @@ public class UploaderService extends Service {
                     URL url = new URL("https://invivo.dsv.su.se/upload.php");
                     Log.d(TAG, "Json upload");
                     File file = new File(MyDirectory.path + File.separator + jsonFileName + ".json");
-
+                    Log.d(TAG, "file path name " + MyDirectory.path + File.separator + jsonFileName + ".json");
                     FileInputStream stream = new FileInputStream(file);
                     String jString = null;
                     try {
@@ -378,6 +395,9 @@ public class UploaderService extends Service {
                             os.close();
                             is.close();
                         }
+
+                        Log.d(TAG, "is conn null" +  (conn != null));
+                        assert conn != null;
                         conn.disconnect();
 
                     } catch (Exception e) {

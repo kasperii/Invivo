@@ -1,36 +1,42 @@
-package com.orpheusdroid.screenrecorder.beaconTracker;
+package com.orpheusdroid.screenrecorder;
 
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.Color;
-import android.util.Log;
+import android.content.SharedPreferences;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.orpheusdroid.screenrecorder.R;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 
 public class TrackedBeaconAdapter extends RecyclerView.Adapter<TrackedBeaconAdapter.ViewHolder> {
 
+    private DataInformationChangeListener listener;
     private ArrayList<TrackedBeacon> mTrackedBeacons;
     private LayoutInflater mInflater;
     private ItemClickListener mClickListener;
     private int lastClickedItem = -1;;
     private Context c;
+    SharedPreferences statePrefs;
 
     // data is passed into the constructor
-    TrackedBeaconAdapter(Context context, ArrayList<TrackedBeacon> trackedBeacons) {
+    TrackedBeaconAdapter(Context context, ArrayList<TrackedBeacon> trackedBeacons, DataInformationChangeListener listener) {
         this.c = context;
+        this.listener = listener;
         this.mInflater = LayoutInflater.from(context);
         this.mTrackedBeacons = trackedBeacons;
+        statePrefs = c.getSharedPreferences("Beacon", Context.MODE_PRIVATE);
     }
 
     // inflates the row layout from xml when needed
@@ -60,6 +66,36 @@ public class TrackedBeaconAdapter extends RecyclerView.Adapter<TrackedBeaconAdap
                 setNameofBeacon(view);
             }  });
 
+        holder.moreButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View view) {
+                lastClickedItem = position;
+                PopupMenu popup = new PopupMenu(view.getContext(), view);
+                popup.inflate(R.menu.tracked_beacon_menu);
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.rename_item:
+                                setNameofBeacon(view);
+                                return true;
+                            case R.id.remove_item:
+                                areYouSureDelete();
+                                return true;
+                            default:
+                                return false;
+                        }
+                    }
+                });
+        //displaying the popup
+        popup.show();
+
+            }
+        });
+
+
+        syncBeaconToShared();
+
     }
 
     // total number of rows
@@ -78,6 +114,7 @@ public class TrackedBeaconAdapter extends RecyclerView.Adapter<TrackedBeaconAdap
         TextView beaconMajor;
         TextView beaconProximity;
         ImageView bluetoothImage;
+        Button moreButton;
 
 
         ViewHolder(View itemView) {
@@ -88,6 +125,7 @@ public class TrackedBeaconAdapter extends RecyclerView.Adapter<TrackedBeaconAdap
             beaconMajor = itemView.findViewById(R.id.rowmajor);
             beaconProximity = itemView.findViewById(R.id.rowProximity);
             bluetoothImage = itemView.findViewById(R.id.rowBeaconImage);
+            moreButton =  itemView.findViewById(R.id.beacon_menu_button);
             //itemView.setOnClickListener(this);
         }
 
@@ -138,5 +176,46 @@ public class TrackedBeaconAdapter extends RecyclerView.Adapter<TrackedBeaconAdap
         }
 
         this.notifyDataSetChanged();
+    }
+    public void saveObjectInShared(ArrayList myListOfObjects, String s){
+
+        SharedPreferences.Editor myEdit = statePrefs.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(myListOfObjects);
+        myEdit.putString(s, json);
+        myEdit.commit();
+    }
+
+    public void syncBeaconToShared(){
+        saveObjectInShared(mTrackedBeacons,"trackedBeacons");
+    }
+
+    private void areYouSureDelete(){
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(c);
+        final TrackedBeacon beacon =  mTrackedBeacons.get(lastClickedItem);
+        builder.setCancelable(true);
+            builder.setTitle("Deleting area");
+            builder.setMessage("Are you sure you want to delete " + beacon.getDescription());
+            builder.setPositiveButton("Delete",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            mTrackedBeacons.remove(beacon);
+                            notifyItemRemoved(lastClickedItem);
+                            notifyItemRangeChanged(lastClickedItem,mTrackedBeacons.size());
+                            listener.resetDataCollection();
+
+                        }
+                    });
+            builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    return;
+                }
+            });
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
     }
 }

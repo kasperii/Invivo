@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Build;
 import androidx.annotation.RequiresApi;
 import android.util.Log;
+import android.widget.Toast;
 
 public class MyPowerReceiver extends BroadcastReceiver{
 
@@ -17,6 +18,7 @@ public class MyPowerReceiver extends BroadcastReceiver{
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onReceive(Context context, Intent intent) {
+
 
         String action = intent.getAction();
 

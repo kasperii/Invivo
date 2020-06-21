@@ -93,6 +93,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
+import static com.orpheusdroid.screenrecorder.BeaconRecorderApplication.getScreenshotPermission;
+import static com.orpheusdroid.screenrecorder.BeaconRecorderApplication.screenshotPermission;
 
 /**
  * Created by vijai on 12-10-2016.
@@ -144,6 +146,7 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
     private MediaProjectionCallback mMediaProjectionCallback;
     private MediaRecorder mMediaRecorder;
     private LocationRequest mLocationRequest;
+    private BeaconRecorderApplication myApp;
 
     private FusedLocationProviderClient mFusedLocationClient;
 
@@ -193,9 +196,10 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
                 // TODO: Awesome things
                 Log.d(Const.TAG, "In Recorder service, power is connected ");
                 String action = intent.getAction();
-
+                myApp.makeToastHere("Action power");
                 Log.d(Const.TAG, "********** " + action);
                 if (action.equals(Intent.ACTION_POWER_CONNECTED)) {
+                    myApp.makeToastHere("ACTION_POWER_CONNECTED");
                     Log.d(Const.TAG, "Power connected ");
                     Intent uploaderIntent = new Intent(context, UploaderService.class);
                     uploaderIntent.setAction(Const.FILE_UPLOADING_START);
@@ -465,6 +469,7 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
 
     @SuppressLint("MissingPermission")
     public void startScreenRec(Intent intent) {
+        myApp = ((BeaconRecorderApplication) getApplicationContext());
 
         video = new Video(); // create a new video to collect data for the video recording
 
@@ -535,7 +540,7 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
 
         } else {
             Log.d(Const.TAG, "It is already recording");
-            Toast.makeText(this, R.string.screenrecording_already_active_toast, Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, R.string.screenrecording_already_active_toast, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -567,6 +572,7 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
         mMediaRecorder = new MediaRecorder();
         initRecorder();
 
+
         //Set Callback for MediaProjection
         mMediaProjectionCallback = new MediaProjectionCallback();
         MediaProjectionManager mProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
@@ -578,6 +584,8 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
 
 
         mMediaProjection = mProjectionManager.getMediaProjection(result, data);
+
+        Intent s = screenshotPermission;
         mMediaProjection.registerCallback(mMediaProjectionCallback, null);
 
         /* Create a new virtual display with the actual default display
@@ -598,6 +606,7 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
             if (isBound)
                 floatingControlService.setRecordingState(Const.RecordingState.RECORDING);
             isRecording = true;
+            myApp.putIsRecording(true);
             stopped = false;
 
             //Send a broadcast receiver to the plugin app to enable show touches since the recording is started
@@ -611,6 +620,8 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
             Log.d(Const.TAG, "Mediarecorder reached Illegal state exception. Did you start the recording twice?");
             Toast.makeText(this, R.string.recording_failed_toast, Toast.LENGTH_SHORT).show();
             isRecording = false;
+            myApp.makeToastHere("putIsRecording(false IllegalStateException);");
+            myApp.putIsRecording(false);
         }
 
         /* Add Pause action to Notification to pause screen recording if the video's android version
@@ -948,6 +959,7 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
             }
         }
         isRecording = false;
+        myApp.putIsRecording(false);
     }
 
     /* Its weird that android does not index the files immediately once its created and that causes

@@ -37,6 +37,9 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission."/>
 
 
@@ -45,7 +48,7 @@
     <protected-broadcast android:name="com.motorola.location.instrumenScreenReceivertation" />
 
     <application
-        android:name=".beaconTracker.BeaconRecorderApplication"
+        android:name=".BeaconRecorderApplication"
         android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -133,6 +136,10 @@
         <activity
             android:name=".PrivacyPolicy"
             android:label="Privacy Policy" />
+        <activity
+            android:name=".AcquireScreenshotPermissionIntent"
+            android:label="Screenshot permission acquirer"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
         <activity android:name=".EditVideoActivity" />
 
         <service android:name="org.altbeacon.beacon.service.BeaconService"
@@ -140,10 +147,11 @@
             <meta-data android:name="longScanForcingEnabled" android:value="true"/>
         </service>
         <service
-            android:name=".beaconTracker.RangingService"
+            android:name=".RangingService"
             android:launchMode="singleInstance"
             android:label="Ranging Service">
         </service>
+
 
 
     </application>

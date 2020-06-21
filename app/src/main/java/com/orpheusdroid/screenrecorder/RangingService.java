@@ -1,4 +1,4 @@
-package com.orpheusdroid.screenrecorder.beaconTracker;
+package com.orpheusdroid.screenrecorder;
 
 import android.app.IntentService;
 import android.app.Service;
@@ -28,7 +28,7 @@ public class RangingService extends Service implements BeaconConsumer {
     @Override
     public void onCreate() {
         Log.d("onCreate","hello");
-        MyNotification.createNotification(getApplicationContext(), 0,"start create rang", "testString");
+        //MyNotification.createNotification(getApplicationContext(), 0,"start create rang", "testString");
         super.onCreate();
     }
 
@@ -40,7 +40,7 @@ public class RangingService extends Service implements BeaconConsumer {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("onStartCommand","hello");
-        MyNotification.createNotification(getApplicationContext(), 0,"on start create rang", "testString");
+        //MyNotification.createNotification(getApplicationContext(), 0,"on start create rang", "testString");
 
         return START_STICKY;
     }

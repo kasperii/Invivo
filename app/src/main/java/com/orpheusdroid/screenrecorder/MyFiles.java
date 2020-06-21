@@ -23,7 +23,7 @@ public class MyFiles {
         ArrayList<File> allFiles = new ArrayList<>();
 
         for (File file : fList) {
-            if (file.isFile() && file.toString().endsWith(".mp4")) {
+            if (file.isFile() && (file.toString().endsWith(".mp4") || file.toString().endsWith(".json"))) {
                 allFiles.add(file);
             } else if (file.isDirectory()) {
                 getFiles(file.getAbsolutePath());
@@ -54,10 +54,10 @@ public class MyFiles {
 //            }
 //        }
 
-        Log.d(TAG, String.valueOf(allFiles.size()));
+        //Log.d(TAG, String.valueOf(allFiles.size()));
 
         for (int i = 0; i < allFiles.size(); i++) {
-            Log.d(TAG, allFiles.get(i).getName());
+            //Log.d(TAG, allFiles.get(i).getName());
         }
 
         return allFiles;

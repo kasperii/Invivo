@@ -1,4 +1,4 @@
-package com.orpheusdroid.screenrecorder.beaconTracker;
+package com.orpheusdroid.screenrecorder;
 
 
 import androidx.annotation.Nullable;
@@ -6,12 +6,12 @@ import androidx.annotation.Nullable;
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.Identifier;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Queue;
 
 //TODO: this is just placeholder
 public class TrackedBeacon {
@@ -23,30 +23,56 @@ public class TrackedBeacon {
     private int[] room;
     private Beacon myBeaconObject;
     public Long lastSeen;
-    //this is an array with pointers to TrackedArea
-    public ArrayList<TrackedArea> trackedAreas;
+    private ArrayList<ProximityDataPoint> proximityData;
+    private ArrayList<AreaThresholds> areaThresholdData;
 
-    //this obejct is used in the beacon, it consists of the UUID, minor and major.
+    //this is an array with pointers to TrackedArea
+    //public ArrayList<TrackedArea> trackedAreas;
+
+    //this object is used in the beacon, it consists of the UUID, minor and major.
     private List<Identifier> mIdentifiers;
     private String id;
+
+    double average = 1;
+    Queue<Double> lastTenDistances = new LinkedList<>(Arrays.asList(average,average,average,average,average,average,average,average,average,average));
+
 
     public TrackedBeacon(Beacon beaconObject) {
         myBeaconObject = beaconObject;
         mIdentifiers = myBeaconObject.getIdentifiers();
         this.uuid = mIdentifiers.get(0).toHexString();
         description = "Nameless beacon";
-        trackedAreas = new ArrayList<>();
+        proximityData = new ArrayList<ProximityDataPoint>();
+        //trackedAreas = new ArrayList<>();
+        areaThresholdData = new ArrayList<AreaThresholds>();
     }
 
     public void updateBeaconObject(Beacon beaconObject) {
-        this.lastSeen();
         myBeaconObject = beaconObject;
     }
-
-    public void lastSeen(){
-        lastSeen = new Date().getTime();
-
+    public void addProximity(double p, long t){
+        lastSeen = t;
+        proximityData.add(new ProximityDataPoint(p, t));
     }
+
+    public ArrayList<ProximityDataPoint> getProximityData() {
+        return proximityData;
+    }
+
+    public ArrayList<AreaThresholds> getAreaThresholdData() {
+        return areaThresholdData;
+    }
+
+    public void addAreaThresholdData(String areaName, double tp) {
+        for(AreaThresholds areaThreshold : areaThresholdData){
+            if(areaThreshold.getAreaName().equalsIgnoreCase(areaName)){
+                areaThreshold.setThresholdProximity(tp);
+                return;
+            }
+        }
+        this.areaThresholdData.add(new AreaThresholds(areaName, tp));
+    }
+
     public Long whenLastSeen(){
         return new Date().getTime() - lastSeen;
     }
@@ -96,8 +122,8 @@ public class TrackedBeacon {
 
     public Double getProximity(){return myBeaconObject.getDistance();}
 
-    public void addArea(TrackedArea a){trackedAreas.add(a);}
-    public void removeArea(TrackedArea a){trackedAreas.remove(a);}
+    //public void addArea(TrackedArea a){trackedAreas.add(a);}
+    //public void removeArea(TrackedArea a){trackedAreas.remove(a);}
 
 
 

@@ -1,16 +1,9 @@
-package com.orpheusdroid.screenrecorder.beaconTracker;
+package com.orpheusdroid.screenrecorder;
 
 import android.graphics.drawable.Drawable;
-import android.util.Pair;
 
-import com.orpheusdroid.screenrecorder.R;
-
-import org.altbeacon.beacon.Beacon;
-
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,9 +14,9 @@ public class TrackedArea {
     public Drawable out;
     public Drawable see;
     public Drawable in;
+    public boolean isRecordingActive = true;
 
     public String name;
-    public boolean isActivated = true;
 
     public TrackedArea(String myName) {
         name = myName;
@@ -48,12 +41,20 @@ public class TrackedArea {
 
         trackedBeaconThresholdInArea.put(b.getUuid(), thresholdDistance);
         trackedBeaconsObjectsInArea.put(b.getUuid(), b);
-        b.addArea(this);
+        //b.addArea(this);
     }
     public void removeBeaconThreshold(TrackedBeacon b){
         trackedBeaconThresholdInArea.remove(b);
         trackedBeaconsObjectsInArea.remove(b);
-        b.removeArea(this);
+        //b.removeArea(this);
+    }
+
+    public void removeBeaconAllThreshold(){
+
+    }
+
+    public void updateBeaconReference(TrackedBeacon b){
+        trackedBeaconsObjectsInArea.put(b.getUuid(), b);
     }
     public void calibrateBeaconThreshold(TrackedBeacon b, Double thresholdDistance){
         trackedBeaconThresholdInArea.put(b.getUuid(), thresholdDistance);
@@ -86,10 +87,16 @@ public class TrackedArea {
         Map.Entry<String, Integer> beaconAtI = (Map.Entry<String, Integer>) mapSet.toArray()[i];
         if (!(beaconAtI == null)) {
             Double prox = trackedBeaconsObjectsInArea.get(beaconAtI.getKey()).getProximity();
+
             trackedBeaconThresholdInArea.put(beaconAtI.getKey(), prox);
+            trackedBeaconsObjectsInArea.get(beaconAtI.getKey()).addAreaThresholdData(this.name,prox);
             return prox;
         }
         return -1.00;
 
+    }
+
+    public void setActivated(boolean activated) {
+        isRecordingActive = activated;
     }
 }

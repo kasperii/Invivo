@@ -54,10 +54,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import com.orpheusdroid.screenrecorder.beaconTracker.BeaconTrackerFragment;
-
 import java.io.BufferedReader;
-import java.io.Console;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -68,7 +65,7 @@ import java.util.List;
 import ly.count.android.sdk.Countly;
 import ly.count.android.sdk.DeviceId;
 
-import static java.lang.Boolean.parseBoolean;
+import static com.orpheusdroid.screenrecorder.BeaconRecorderApplication.getIsRecording;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -78,12 +75,14 @@ public class MainActivity extends AppCompatActivity {
   private MediaProjection mMediaProjection;
   private MediaProjectionManager mProjectionManager;
   private FloatingActionButton fab;
+  private FloatingActionButton fab2;
   private TabLayout tabLayout;
   private ViewPager viewPager;
   private SharedPreferences prefs;
   private LocationManager locationManager;
   Intent intent;
   private boolean recordingIsON = false;
+  SharedPreferences statePrefs;
 
   private static final String TAG = "MainActivity";
   private static final String EXTRA_STORAGE_REFERENCE_KEY = "StorageReference";
@@ -128,6 +127,8 @@ public class MainActivity extends AppCompatActivity {
         toolBarColor = ContextCompat.getColor(this, R.color.colorPrimary_black);
         break;
     }
+    statePrefs = getSharedPreferences("Beacon", Context.MODE_PRIVATE);
+
 
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
@@ -209,7 +210,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     fab = findViewById(R.id.fab);
-
+    fab2 = findViewById(R.id.fab2);
     if (mMediaProjection != null) {
       Log.d(TAG, "on click");
       fab.hide();
@@ -219,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
       @Override
       public void onClick(View view) {
         Log.d(Const.TAG, "Recording Service is running: " + String.valueOf(isServiceRunning(RecorderService.class)));
-        if (mMediaProjection == null && !recordingIsON) { //&& !isServiceRunning(RecorderService.class)
+        if (mMediaProjection == null && !getIsRecording()) { //&& !isServiceRunning(RecorderService.class)
           //Request Screen recording permission
           Log.d(Const.TAG, "on mMediaProjection");
           startActivityForResult(mProjectionManager.createScreenCaptureIntent(), Const.SCREEN_RECORD_REQUEST_CODE);
@@ -236,6 +237,14 @@ public class MainActivity extends AppCompatActivity {
         return true;
       }
     });
+    fab2.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+          ViewPagerAdapter adapter = (ViewPagerAdapter) viewPager.getAdapter();
+          ((BeaconTrackerFragment) adapter.getItem(2)).addNewItem();
+      }
+    });
+    fab2.hide();
   }
 
 
@@ -280,9 +289,15 @@ public class MainActivity extends AppCompatActivity {
         switch (position) {
           case 0:
             fab.show();
+            fab2.hide();
             break;
           case 1:
+              fab.hide();
+              fab2.hide();
+              break;
+          case 2:
             fab.hide();
+            fab2.show();
             break;
         }
       }
@@ -338,8 +353,6 @@ public class MainActivity extends AppCompatActivity {
     Intent screenServiceIntent = new Intent(this, ScreenService.class);
     startService(screenServiceIntent);
     recordingIsON = true;
-
-
   }
 
 

@@ -57,5 +57,15 @@
         android:layout_margin="@dimen/fab_margin"
         app:srcCompat="@drawable/fab_record"
         />
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="@dimen/fab_margin"
+        app:srcCompat="@drawable/ic_fab_add"
+        android:backgroundTint="?attr/colorPrimary"
+        app:borderWidth="0dp"
+        />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -96,28 +96,17 @@
             android:text="beacon 3" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
+
+
     <Button
-        android:id="@+id/addNewBeaconToArea"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
+        android:id="@+id/area_menu_button"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_alignParentEnd="true"
         android:layout_marginStart="0dp"
-
-        android:layout_marginEnd="20dp"
-        android:background="@drawable/layout_button"
-        android:text="+"
-        android:textAlignment="center" />
-
-    <Button
-        android:id="@+id/syncBeaconsInArea"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-
-
-        android:layout_marginStart="0dp"
-        android:layout_marginEnd="10dp"
-        android:layout_toStartOf="@+id/addNewBeaconToArea"
-        android:background="@drawable/layout_button"
-        android:text="s"
-        android:textAlignment="center" />
+        android:layout_marginEnd="0dp"
+        android:background="@drawable/ic_more"
+        android:backgroundTint="@color/colorPrimary"
+        style="?android:attr/borderlessButtonStyle"
+        />
 </RelativeLayout>

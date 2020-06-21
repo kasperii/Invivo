@@ -15,16 +15,14 @@
  * along with this program.  If not, see http://www.gnu.org/licenses
  */
 
-package com.orpheusdroid.screenrecorder.beaconTracker;
+package com.orpheusdroid.screenrecorder;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
-import android.app.Application;
 import android.app.Fragment;
+import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,21 +34,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.TextView;
 
-import com.orpheusdroid.screenrecorder.Const;
-import com.orpheusdroid.screenrecorder.MyNotification;
-import com.orpheusdroid.screenrecorder.R;
-import com.orpheusdroid.screenrecorder.RecorderService;
-
-import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconManager;
 
 import static android.content.Context.LAYOUT_INFLATER_SERVICE;
@@ -66,9 +56,17 @@ public class BeaconTrackerFragment extends Fragment{
 	private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
     private TrackedBeaconAdapter trackedBeaconAdapter;
     private TrackedAreaAdapter trackedAreaAdapter;
+    private SearchBeaconAdapter searchBeaconAdapter;
     private BeaconRecorderApplication myApp;
     View view;
+    Context c;
 
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        this.c = context;
+    }
 
 
 
@@ -94,7 +92,7 @@ public class BeaconTrackerFragment extends Fragment{
         RecyclerView recyclerViewBeacon = view.findViewById(R.id.list_of_Beacons);
         recyclerViewBeacon.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        trackedBeaconAdapter = new TrackedBeaconAdapter(getContext(), myApp.getTrackedBeacons());
+        trackedBeaconAdapter = new TrackedBeaconAdapter(getContext(), myApp.getTrackedBeacons(), myApp);
         //trackedBeaconAdapter.setClickListener(getActivity());
         recyclerViewBeacon.setAdapter(trackedBeaconAdapter);
 
@@ -102,7 +100,7 @@ public class BeaconTrackerFragment extends Fragment{
         // set up the RecyclerView for tracked areas
         RecyclerView recyclerViewArea = view.findViewById(R.id.list_of_Areas);
         recyclerViewArea.setLayoutManager(new LinearLayoutManager(getActivity()));
-        trackedAreaAdapter = new TrackedAreaAdapter(getContext(), myApp.getTrackedAreas(), myApp.getTrackedBeacons());
+        trackedAreaAdapter = new TrackedAreaAdapter(getContext(), myApp.getTrackedAreas(), myApp.getTrackedBeacons(), myApp);
         recyclerViewArea.setAdapter(trackedAreaAdapter);
 
 
@@ -314,11 +312,15 @@ public class BeaconTrackerFragment extends Fragment{
         trackedAreaAdapter.notifyDataSetChanged();
     }
 
-    public void searchNewBeacon(){
+    public void updateSearchBeaconView(){
+        searchBeaconAdapter.notifyDataSetChanged();
+    }
+
+    public void addNewObject(){
         // inflate the layout of the popup window
         LayoutInflater inflater = (LayoutInflater)
                 getActivity().getSystemService(LAYOUT_INFLATER_SERVICE);
-        View popupView = inflater.inflate(R.layout.popup_beacon_search_window, null);
+        View popupView = inflater.inflate(R.layout.popup_beacon_area_selection, null);
 
         // create the popup window
         int width = LinearLayout.LayoutParams.WRAP_CONTENT;
@@ -330,16 +332,109 @@ public class BeaconTrackerFragment extends Fragment{
         // which view you pass in doesn't matter, it is only used for the window tolken
         popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
 
+        final Button areaButton = (Button) popupView.findViewById(R.id.addAreaButton);
+        areaButton.setOnClickListener(new View.OnClickListener() {
+                                          @Override
+                                          public void onClick(View v) {
+                                              popupWindow.dismiss();
+                                              addNewArea();
+                                              return;
+                                          }
+                                      });
+        final Button beaconButton = (Button) popupView.findViewById(R.id.addBeaconButton);
+        beaconButton.setOnClickListener(new View.OnClickListener() {
+                                          @Override
+                                          public void onClick(View v) {
+                                              popupWindow.dismiss();
+                                              searchNewBeacon();
+                                              return;
+                                          }
+                                      });
+//        @Override
+//          public boolean onClick(View v, MotionEvent event) {
+//              popupWindow.dismiss();
+//              return true;
+//          }
+
         // dismiss the popup window when touched
-        popupView.setOnTouchListener(new View.OnTouchListener() {
+
+    }
+    public void addNewItem(){
+        addNewObject();
+    }
+
+    public void searchNewBeacon(){
+
+
+
+        // inflate the layout of the popup window
+        LayoutInflater inflater = (LayoutInflater)
+                getActivity().getSystemService(LAYOUT_INFLATER_SERVICE);
+        View popupView = inflater.inflate(R.layout.popup_beacon_search_window, null);
+
+        // create the popup window
+        int width = LinearLayout.LayoutParams.WRAP_CONTENT;
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+        boolean focusable = true; // lets taps outside the popup also dismiss it
+        PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
+
+        // show the popup window
+        // which view you pass in doesn't matter, it is only used for the window tolken
+
+        // set up the RecyclerView for tracked beacons
+        RecyclerView recyclerViewSearchBeacon = popupView.findViewById(R.id.list_of_searchingBeacons);
+        recyclerViewSearchBeacon.setLayoutManager(new LinearLayoutManager(myApp.getApplicationContext()));
+
+        searchBeaconAdapter = new SearchBeaconAdapter(this.c, myApp.getFoundBeacons(), myApp.getTrackedBeacons());
+        //trackedBeaconAdapter.setClickListener(getActivity());
+        recyclerViewSearchBeacon.setAdapter(searchBeaconAdapter);
+        popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
+        myApp.setSearchingForNewBeacons(true);
+        popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
             @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                popupWindow.dismiss();
-                return true;
+            public void onDismiss() {
+                myApp.setSearchingForNewBeacons(false);
             }
         });
+//        @Override
+//          public boolean onClick(View v, MotionEvent event) {
+//              popupWindow.dismiss();
+//              return true;
+//          }
+
+        // dismiss the popup window when touched
+
+    }
+    public void addNewArea(){
+        LayoutInflater inflater = (LayoutInflater)
+                getActivity().getSystemService(LAYOUT_INFLATER_SERVICE);
+
+        // create an alert builder
+        AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());
+        builder.setTitle("Set a name for the new area");
+
+        // set the custom layout
+        final View customLayout = inflater.inflate(R.layout.change_text, null);
+        builder.setView(customLayout);
+
+        // add a button
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // send data from the AlertDialog to the Activity
+                EditText editText = customLayout.findViewById(R.id.editText);
+                String name = editText.getText().toString();
+                if(myApp.isNoOtherAreaBySameName(name)){
+                    myApp.createNewArea(name);
+                }else{
+                    myApp.makeToastHere("There is already an area with that name");
+                }
+            }
+        });
+
+        // create and show the alert dialog
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
-
-
-    }
+}

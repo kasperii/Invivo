@@ -2,6 +2,7 @@ package com.orpheusdroid.screenrecorder;
 
 import android.util.Log;
 
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -9,9 +10,9 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class JsonUtil {
-
     public static String toJson(Video video) {
         try {
             // Here we convert Java Object to JSON
@@ -51,9 +52,50 @@ public class JsonUtil {
         } catch (JSONException e) {
             Log.d(Const.TAG, e.toString());
         }
-
         return null;
+    }
+    public static String toJson(ProximityData proximityData) {
+        try {
+            ArrayList<ProximityDataPoint> proximities = proximityData.getProximities();
+            ArrayList<AreaThresholds> areaThresholds = proximityData.getAreaThresholds();
+            // Here we convert Java Object to JSON
+            JSONObject jsonObj = new JSONObject();
+            jsonObj.put("userID", proximityData.getUserID());
+            jsonObj.put("uuid", proximityData.getBeaconUuid());
+            jsonObj.put("startTime", proximityData.getTimeStart());
+            jsonObj.put("endTime", proximityData.getTimeEnd());
+            jsonObj.put("timeZone", proximityData.timeZone.getRawOffset());
+            
+            
+            // create jsonArray for apps
+            JSONArray jsonAppArr = new JSONArray();
+            if(areaThresholds!=null) {
+                for (AreaThresholds areaThreshold : areaThresholds) {
+                    JSONObject appObj = new JSONObject();
+                    appObj.put("areaName", areaThreshold.getAreaName());
+                    appObj.put("thresholdProximity", areaThreshold.getThresholdProximity());
+                    jsonAppArr.put(appObj);
+                }
+            }
+            jsonObj.put("areaThresholds",jsonAppArr);
 
+
+            // create jsonArray for location
+            JSONArray jsonProximityArr = new JSONArray();
+            for(ProximityDataPoint dataPoint : proximities){
+                JSONObject locObj = new JSONObject();
+                locObj.put("timestamp", dataPoint.getTimestamp());
+                locObj.put("proximityPoint", dataPoint.getProximityPoint());
+                jsonProximityArr.put(locObj);
+            }
+            jsonObj.put("proximityPoints",jsonProximityArr);
+
+            return jsonObj.toString();
+
+        } catch (JSONException e) {
+            Log.d(Const.TAG, e.toString());
+        }
+        return null;
     }
 
 
@@ -67,11 +109,8 @@ public class JsonUtil {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         System.out.print(jsonString);
-
     }
-
 
 
 }

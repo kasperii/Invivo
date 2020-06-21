@@ -1,43 +1,49 @@
-package com.orpheusdroid.screenrecorder.beaconTracker;
+package com.orpheusdroid.screenrecorder;
 
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.googlecode.mp4parser.authoring.Track;
-import com.orpheusdroid.screenrecorder.R;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 
 public class TrackedAreaAdapter extends RecyclerView.Adapter<TrackedAreaAdapter.ViewHolder> {
 
+    private DataInformationChangeListener listener;
     private ArrayList<TrackedArea> mTrackedAreas;
     private ArrayList<TrackedBeacon> trackedBeacons;
     private LayoutInflater mInflater;
     private ItemClickListener mClickListener;
     private int lastClickedItem = -1;;
     private Context c;
+    private SharedPreferences statePrefs;
 
     // data is passed into the constructor
-    TrackedAreaAdapter(Context context, ArrayList<TrackedArea> trackedAreas, ArrayList<TrackedBeacon> trackedBeacons) {
+    TrackedAreaAdapter(Context context, ArrayList<TrackedArea> trackedAreas, ArrayList<TrackedBeacon> trackedBeacons, DataInformationChangeListener listener) {
         this.c = context;
+        this.listener = listener;
         this.mInflater = LayoutInflater.from(context);
         this.mTrackedAreas = trackedAreas;
         this.trackedBeacons = trackedBeacons;
+        statePrefs = c.getSharedPreferences("Beacon", Context.MODE_PRIVATE);
     }
     // inflates the row layout from xml when needed
     @Override
@@ -58,37 +64,76 @@ public class TrackedAreaAdapter extends RecyclerView.Adapter<TrackedAreaAdapter.
         TrackedBeacon beacon1 = area.getObjectByIndex(0);
         TrackedBeacon beacon2 = area.getObjectByIndex(1);
         TrackedBeacon beacon3 = area.getObjectByIndex(2);
-         //This section are a lot of repetition, can be solved more clear - but functionality is:
+        //This section are a lot of repetition, can be solved more clear - but functionality is:
         //by getting the objects first 3 beacons and shows them that are not null
 
 
-         updateBeaconLight(area,beacon1,holder.beaconButton1text,holder.beaconRow1,holder.statusB1);
-         updateBeaconLight(area,beacon2,holder.beaconButton2text,holder.beaconRow2,holder.statusB2);
-         updateBeaconLight(area,beacon3,holder.beaconButton3text,holder.beaconRow3,holder.statusB3);
+        updateBeaconLight(area, beacon1, holder.beaconButton1text, holder.beaconRow1, holder.statusB1);
+        updateBeaconLight(area, beacon2, holder.beaconButton2text, holder.beaconRow2, holder.statusB2);
+        updateBeaconLight(area, beacon3, holder.beaconButton3text, holder.beaconRow3, holder.statusB3);
 
-         if(beacon2!=null){
-             holder.beaconButton2text.setText(area.getObjectByIndex(1).getDescription());
-             holder.beaconRow2.setVisibility(View.VISIBLE);
-         }else{holder.beaconRow2.setVisibility(View.INVISIBLE);}
+        if (beacon2 != null) {
+            holder.beaconButton2text.setText(area.getObjectByIndex(1).getDescription());
+            holder.beaconRow2.setVisibility(View.VISIBLE);
+        } else {
+            holder.beaconRow2.setVisibility(View.INVISIBLE);
+        }
 
-         if(beacon3!=null){
-             holder.beaconButton3text.setText(area.getObjectByIndex(2).getDescription());
-             holder.beaconRow3.setVisibility(View.VISIBLE);
-         }else{holder.beaconRow3.setVisibility(View.INVISIBLE);}
+        if (beacon3 != null) {
+            holder.beaconButton3text.setText(area.getObjectByIndex(2).getDescription());
+            holder.beaconRow3.setVisibility(View.VISIBLE);
+        } else {
+            holder.beaconRow3.setVisibility(View.INVISIBLE);
+        }
+
+        if(!(mTrackedAreas.get(position).isRecordingActive)){holder.itemView.setAlpha(0.4f);}else{holder.itemView.setAlpha(1f);}
 
 
-         holder.plus.setOnClickListener(new View.OnClickListener() {
+        holder.moreButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
+            public void onClick(final View view) {
                 lastClickedItem = position;
-                showAlertChoice(view.getContext());
-            }  });
-         holder.sync.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                lastClickedItem = position;
-                syncBeacons();
-            }  });
+                PopupMenu popup = new PopupMenu(view.getContext(), view);
+                popup.inflate(R.menu.tracked_area_menu);
+                Menu menuOpts = popup.getMenu();
+                if(mTrackedAreas.get(lastClickedItem).isRecordingActive){
+                    menuOpts.getItem(4).setTitle("Dectivate");
+                }else{menuOpts.getItem(4).setTitle("Reactivate");}
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.rename_item:
+                                setNameofArea(view);
+                                return true;
+                            case R.id.remove_item:
+                                areYouSureDelete();
+                                return true;
+                            case R.id.sync_item:
+                                syncBeacons();
+                                return true;
+                            case R.id.add_beacon_item:
+                                chooseBeaconsInArea(view);
+                                return true;
+                            case R.id.activate_item:
+                                if(mTrackedAreas.get(lastClickedItem).isRecordingActive){
+                                    mTrackedAreas.get(lastClickedItem).setActivated(false);
+                                }else{
+                                    mTrackedAreas.get(lastClickedItem).setActivated(true);
+                                }
+                                notifyDataSetChanged();
+                                return true;
+                            default:
+                                return false;
+                        }
+                    }
+                });
+        //displaying the popup
+        popup.show();
+
+            }
+        });
+        syncBeaconAreaToShared();
     }
 
     // total number of rows
@@ -103,7 +148,7 @@ public class TrackedAreaAdapter extends RecyclerView.Adapter<TrackedAreaAdapter.
          if(tb!=null){
              tv.setText(area.getObjectByIndex(0).getDescription());
              br.setVisibility(View.VISIBLE);
-             Log.d("what",tb.getDescription() + " "+tb.whenLastSeen());
+             Log.d("updateBeaconLight",tb.getDescription() + " "+tb.whenLastSeen());
              if(tb.whenLastSeen()>10000) {
                  s.setBackgroundResource(R.drawable.beacon_lost);
                  return;
@@ -135,6 +180,7 @@ public class TrackedAreaAdapter extends RecyclerView.Adapter<TrackedAreaAdapter.
         TextView beaconButton3text;
         Button plus;
         Button sync;
+        Button moreButton;
 
 //        TextView beaconUuid;
 //        TextView beaconMinor;
@@ -152,11 +198,10 @@ public class TrackedAreaAdapter extends RecyclerView.Adapter<TrackedAreaAdapter.
             statusB2 = itemView.findViewById(R.id.statusBeacon2);
             statusB3 = itemView.findViewById(R.id.statusBeacon3);
 
-            beaconButton1text = itemView.findViewById(R.id.beacon1text);;
-            beaconButton2text = itemView.findViewById(R.id.beacon2text);;
-            beaconButton3text = itemView.findViewById(R.id.beacon3text);;
-            plus = itemView.findViewById(R.id.addNewBeaconToArea);
-            sync = itemView.findViewById(R.id.syncBeaconsInArea);
+            beaconButton1text = itemView.findViewById(R.id.beacon1text);
+            beaconButton2text = itemView.findViewById(R.id.beacon2text);
+            beaconButton3text = itemView.findViewById(R.id.beacon3text);
+            moreButton = itemView.findViewById(R.id.area_menu_button);
 //            beaconUuid = itemView.findViewById(R.id.rowuuid);
 //            beaconMinor = itemView.findViewById(R.id.rowminor);
 //            beaconMajor = itemView.findViewById(R.id.rowmajor);
@@ -229,6 +274,7 @@ public class TrackedAreaAdapter extends RecyclerView.Adapter<TrackedAreaAdapter.
                     }
                 }
                 notifyDataSetChanged();
+                listener.resetDataCollection();
             }
         });
         builder.setNegativeButton("Cancel", null);
@@ -241,6 +287,8 @@ public class TrackedAreaAdapter extends RecyclerView.Adapter<TrackedAreaAdapter.
         //
     }
 
+
+
     //this method sets the proximity based on the current location
     public void syncBeacons(){
         String text = "Syncing beacon proximity to ";
@@ -251,5 +299,86 @@ public class TrackedAreaAdapter extends RecyclerView.Adapter<TrackedAreaAdapter.
 
         Toast toast = Toast.makeText(this.c, text, Toast.LENGTH_SHORT);
         toast.show();
+    }
+
+    public void saveObjectInShared(ArrayList myListOfObjects, String s){
+
+        SharedPreferences.Editor myEdit = statePrefs.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(myListOfObjects);
+        myEdit.putString(s, json);
+        myEdit.commit();
+    }
+
+    public void syncBeaconAreaToShared(){
+        saveObjectInShared(mTrackedAreas,"trackedAreas");
+        saveObjectInShared(trackedBeacons,"trackedBeacons");
+    }
+
+    private void chooseBeaconsInArea(View view){
+        showAlertChoice(view.getContext());
+    }
+
+    private void areYouSureDelete(){
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(c);
+        final TrackedArea area =  mTrackedAreas.get(lastClickedItem);
+        builder.setCancelable(true);
+            builder.setTitle("Deleting area");
+            builder.setMessage("Are you sure you want to delete " + area.getName());
+            builder.setPositiveButton("Delete",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            mTrackedAreas.remove(area);
+                            notifyItemRemoved(lastClickedItem);
+                            notifyItemRangeChanged(lastClickedItem,mTrackedAreas.size());
+                            listener.resetDataCollection();
+                        }
+                    });
+            builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    return;
+                }
+            });
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
+    }
+    public void setNameofArea(View view) {
+
+        // create an alert builder
+        AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());
+        builder.setTitle("Rename the area");
+
+        // set the custom layout
+        final View customLayout = mInflater.inflate(R.layout.change_text, null);
+        builder.setView(customLayout);
+
+        // add a button
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // send data from the AlertDialog to the Activity
+                EditText editText = customLayout.findViewById(R.id.editText);
+                sendDialogDataToActivity(editText.getText().toString());
+            }
+        });
+
+
+        // create and show the alert dialog
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void sendDialogDataToActivity(String data) {
+    if(!(data.isEmpty())){
+        if(data.equalsIgnoreCase(mTrackedAreas.get(lastClickedItem).getName())) {
+            mTrackedAreas.get(lastClickedItem).setName(data);
+        }
+    }
+        this.notifyDataSetChanged();
+        listener.resetDataCollection();
     }
 }
