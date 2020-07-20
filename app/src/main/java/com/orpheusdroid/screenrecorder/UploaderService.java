@@ -184,7 +184,6 @@ public class UploaderService extends Service {
             } else {
                 resumeUpload();
             }
-            Log.d(TAG, "Should I each here?");
 
         } catch (Exception e) {
             Log.d(TAG + "uploading tus ", e.toString());
@@ -396,7 +395,7 @@ public class UploaderService extends Service {
                             is.close();
                         }
 
-                        Log.d(TAG, "is conn null" +  (conn != null));
+                        Log.d(TAG, "is conn null " +  (conn != null));
                         assert conn != null;
                         conn.disconnect();
 

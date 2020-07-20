@@ -86,7 +86,7 @@ public class TrackedArea {
         Set<Map.Entry<String, Double>> mapSet = trackedBeaconThresholdInArea.entrySet();
         Map.Entry<String, Integer> beaconAtI = (Map.Entry<String, Integer>) mapSet.toArray()[i];
         if (!(beaconAtI == null)) {
-            Double prox = trackedBeaconsObjectsInArea.get(beaconAtI.getKey()).getProximity();
+            Double prox = trackedBeaconsObjectsInArea.get(beaconAtI.getKey()).getProximity(); //getRunningAverageRssi()
 
             trackedBeaconThresholdInArea.put(beaconAtI.getKey(), prox);
             trackedBeaconsObjectsInArea.get(beaconAtI.getKey()).addAreaThresholdData(this.name,prox);

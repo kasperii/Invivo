@@ -120,7 +120,7 @@ public class TrackedBeacon {
         return room;
     }
 
-    public Double getProximity(){return myBeaconObject.getDistance();}
+    public Double getProximity(){return myBeaconObject.getRunningAverageRssi();}
 
     //public void addArea(TrackedArea a){trackedAreas.add(a);}
     //public void removeArea(TrackedArea a){trackedAreas.remove(a);}

@@ -81,13 +81,10 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     private long timeNow;
     private long dataCollectionSessionStartTime;
 
-    public static Intent screenshotPermission = null;
+    static Intent screenshotPermission = null;
     private ArrayList<ProximityData> currentBeaconProximityDataList;
     private boolean searchingForNewBeacons = false;
     private BroadcastReceiver chargerReceiver;
-
-
-    // these class fields are used for the rolling average calculation
 
     @Override
     public void onCreate() {
@@ -249,6 +246,31 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     }
 
 
+
+    /// Functions for getting values from the application - class. Possibly bad practice as these
+    // variables could be accessed with a direct link to the application
+
+    static boolean getIsRecording(){
+        return isRecording;
+    }
+    void putIsRecording(boolean r){
+        isRecording = r;
+    }
+    void setSearchingForNewBeacons(boolean shouldSearch){
+        searchingForNewBeacons = shouldSearch;
+    }
+    static MediaProjectionManager getmProjectionManager(){return mProjectionManager;}
+    void makeToastHere(String text){
+        Toast toast = Toast.makeText(this, text, Toast.LENGTH_SHORT);
+        toast.show();
+    }
+    boolean getMonitoring() {return monitoring;}
+    public void setBeaconTrackerFragment(BeaconTrackerFragment fragment) {
+        this.BeaconTrackerFragment = fragment;
+    }
+
+    // DISABLE or ENABLE MONITORING of beacons
+    // great functions to close down full bluetooth functionality with .
     public void disableMonitoring() {
         //makeToastHere("disable monitoring");
         if (regionBootstrap != null) {
@@ -265,13 +287,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         regionBootstrap = new RegionBootstrap(this, region);
     }
 
-    void makeToastHere(String text){
-        Toast toast = Toast.makeText(this, text, Toast.LENGTH_SHORT);
-        toast.show();
-    }
-
-
-
+    // FUNCTIONS THAT ARE CALLED WHEN BLUETOOTH is found
 
     @Override
     public void didEnterRegion(Region arg0) {
@@ -291,23 +307,18 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
         }
 
-
-
     @Override
     public void didExitRegion(Region region) {
         makeToastHere("Exit region");
-        //MyNotification.createNotification(this, createStringOut("didExitRegion"), "testString");
     }
 
+    // same as above, but abstract, Enter and Exit are only called once
     //https://stackoverflow.com/questions/22689970/android-radiusnetwork-ibeaconlibrary-diddeterminestateforregion-when-is-called
-    @Override
-    public void didDetermineStateForRegion(int state, Region region) {
+    @Override public void didDetermineStateForRegion(int state, Region region) {
         makeToastHere("Current region state is: " + (state == 1 ? "INSIDE" : "OUTSIDE ("+state+")"));
-        //logToDisplay("Current region state is: " + (state == 1 ? "INSIDE" : "OUTSIDE ("+state+")"));
-        //change this to show in notification or UI
         if(state == 1){
+            //if enter, then create start saving
             startSavingProximityData();
-            dataCollectionSessionStartTime = new Date().getTime();
             startRanging();
         }
         else {
@@ -325,6 +336,8 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     //This method is called when a beacon that should be tracked is seen!
     private void startRanging(){
 
+        // RangeNotifier runs didRangeBeaconsInRegion whenever beacons are found,
+        // ish once a second (update time can be tweaked)
         myRangeNotifier = new RangeNotifier() {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
@@ -335,7 +348,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
                     Log.d(TAG, "15 minute proximity data storage session reset");
                     resetSavingProximityData(true);
                 }
-                //TODO: add gyro
+                //TODO: add gyro?
                 for (Beacon beacon: beacons) {
                     //Log.d(TAG,"beacon" + beacon.toString());
                     boolean found = false;
@@ -420,7 +433,8 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
 
 
-    //this calls the updateBeaconView if there is an instance of the fragment
+    // UPDATE VIEW
+    // this calls the updateBeaconView if there is an instance of the fragment
     void updateBeaconView(){
         if(this.BeaconTrackerFragment != null) {
             this.BeaconTrackerFragment.updateBeaconView();
@@ -437,7 +451,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
 
 
-
+    // RECORD?
     // this methods uses an heuristic evaluation to see if the recorder should be called
     public boolean isBeaconInRecordingRange(TrackedBeacon foundBeacon){
 
@@ -464,7 +478,6 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         return false;
         //TODO: Implement that this looks at how close it has been on average, and how close the threshold areas are
     }
-
 
     // once called the screen recorder is sent and intent to SKIP recording
     public void stopRecordingCall(){
@@ -519,10 +532,6 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         }
     }
 
-    // this method allows the beaconTrackerFragment, once instanced, to send the context to this application
-    public void setBeaconTrackerFragment(BeaconTrackerFragment fragment) {
-        this.BeaconTrackerFragment = fragment;
-    }
 
 
     // logToDisplay is used for debug reasons, if there is an instance of the fragments,
@@ -561,8 +570,8 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     }
 
 
-    public boolean getMonitoring() {return monitoring;}
 
+    // SAVE and RETURN object from internal storage
     public void saveObjectInShared(ArrayList myListOfObjects, String s){
 
         SharedPreferences.Editor myEdit = statePrefs.edit();
@@ -583,11 +592,11 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         ArrayList obj = gson.fromJson(json, new TypeToken<ArrayList<TrackedArea>>(){}.getType());
         return obj;
     }
-
     public void syncBeaconAreaToShared(){
         saveObjectInShared(trackedAreas,"trackedAreas");
         saveObjectInShared(trackedBeacons,"trackedBeacons");
     }
+
 
     private boolean isServiceRunning(Class<?> serviceClass) {
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
@@ -598,6 +607,10 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         }
         return false;
     }
+
+    /// SCREENSHOT PERMISSION HANDLER
+    //the following functions are implemented to open and create a new notification
+    //that opens a  ScreenshotPermissionRequest. Else the app cannot start from background.
 
     public static void getScreenshotPermission() {
         try {
@@ -614,7 +627,6 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
             openScreenshotPermissionRequester();
         }
     }
-
     protected static void openScreenshotPermissionRequester(){
         if(!acquiringScreenshotPermissionIntent) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) { // This is at least android 10...
@@ -631,9 +643,6 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
             }
         }
     }
-
-
-
     protected static void setScreenshotPermission(final int req, final int resc, final Intent permissionIntent) {
         requestCode = req;
         resultCode = resc;
@@ -647,18 +656,6 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         return screenshotPermission!=null;
     }
     public static MediaProjection getmMediaProjection(){return mMediaProjection;}
-
-    public static boolean getIsRecording(){
-        return isRecording;
-    }
-    public void putIsRecording(boolean r){
-        isRecording = r;
-    }
-    public void setSearchingForNewBeacons(boolean shouldSearch){
-        searchingForNewBeacons = shouldSearch;
-    }
-
-    public static MediaProjectionManager getmProjectionManager(){return mProjectionManager;}
 
 
     private static void launchNotificationIntent(Intent i) {
@@ -708,6 +705,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 //Method that initiates the beacon proximity object that is stored.
     private void startSavingProximityData(){
         long startTime = System.currentTimeMillis();
+        dataCollectionSessionStartTime = startTime;
         if(!currentBeaconProximityDataList.isEmpty()){Log.d(TAG,"start new saving though last data list is not empty");}
 
         for(TrackedBeacon trackedBeacon: trackedBeacons) {
