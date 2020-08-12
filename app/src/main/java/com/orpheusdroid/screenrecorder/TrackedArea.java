@@ -31,7 +31,7 @@ public class TrackedArea {
     //this method returns the threshold distance registered to the beacon
     public Double getThresholdDistance(TrackedBeacon foundBeacon) {
         if (trackedBeaconThresholdInArea.get(foundBeacon.getUuid()) == null){
-            double nullDist = -1;
+            double nullDist = -9999999;
             return nullDist;
         }
         return trackedBeaconThresholdInArea.get(foundBeacon.getUuid());

@@ -143,7 +143,7 @@ public class TrackedAreaAdapter extends RecyclerView.Adapter<TrackedAreaAdapter.
     }
 
     public void updateBeaconLight(TrackedArea area, TrackedBeacon tb, TextView tv, LinearLayoutCompat br, Button s){
-         //This section are a lot of repetition, can be solved more clear - but functionality is:
+         //In this section there are a lot of repetition, can be solved more clear - but functionality is:
         //by getting the objects first 3 beacons and shows them that are not null
          if(tb!=null){
              tv.setText(area.getObjectByIndex(0).getDescription());
@@ -153,7 +153,7 @@ public class TrackedAreaAdapter extends RecyclerView.Adapter<TrackedAreaAdapter.
                  s.setBackgroundResource(R.drawable.beacon_lost);
                  return;
              } else {
-                 if (tb.getProximity() < area.getThresholdDistance(tb)) {
+                 if (tb.getProximity() > area.getThresholdDistance(tb)) {
                      s.setBackgroundResource(R.drawable.beacon_inside);
                      return;
                  } else {

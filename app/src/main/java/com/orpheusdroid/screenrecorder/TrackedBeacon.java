@@ -51,6 +51,13 @@ public class TrackedBeacon {
         myBeaconObject = beaconObject;
     }
     public void addProximity(double p, long t){
+        if(lastSeen+10000<t){
+            resetAverage(p);
+        }else {
+            lastTenDistances.add(p);
+            double removedDigit = lastTenDistances.poll();
+            average = (10 * average - removedDigit + p) / 10;
+        }
         lastSeen = t;
         proximityData.add(new ProximityDataPoint(p, t));
     }
@@ -120,7 +127,16 @@ public class TrackedBeacon {
         return room;
     }
 
-    public Double getProximity(){return myBeaconObject.getRunningAverageRssi();}
+    public Double getProximity(){
+        myBeaconObject.getDistance();
+        myBeaconObject.getDistanceCalculator();
+        return myBeaconObject.getRunningAverageRssi();
+    }
+    public void resetAverage(Double dist){
+        average = dist;
+        lastTenDistances = new LinkedList<>(Arrays.asList(average,average,average,average,average,average,average,average,average,average));
+        }
+
 
     //public void addArea(TrackedArea a){trackedAreas.add(a);}
     //public void removeArea(TrackedArea a){trackedAreas.remove(a);}

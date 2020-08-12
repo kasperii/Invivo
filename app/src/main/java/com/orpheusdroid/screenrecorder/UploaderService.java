@@ -162,7 +162,6 @@ public class UploaderService extends Service {
             filePath = file.getAbsolutePath();
             fileName = file.getName();
             fileUri = Uri.fromFile(new File(filePath));
-            TusUpload upload = new TusUpload(file);
 
             Log.d(TAG, String.valueOf(MyFiles.getFileLength(MyDirectory.path)));
             if(file.length() == 0){
@@ -170,6 +169,8 @@ public class UploaderService extends Service {
                 MyFiles.deleteFile(fileUri, context);
                 resumeUpload();
             }
+
+            TusUpload upload = new TusUpload(file);
             // make sure that the file exits and it is closed
             if (file != null && file.exists()) {
                 Log.d(TAG, "Closed: "+String.valueOf(MyFiles.isClosed(file)));
@@ -315,8 +316,14 @@ public class UploaderService extends Service {
                     cancel(true);
                     return null;
                 }
-                Log.d(TAG, "Upload URL: "+uploaderURL.toString());
-                Log.d(TAG, String.valueOf(e));
+                try{Log.d(
+                        TAG, "Upload URL: "+uploaderURL.toString());
+                    Log.d(TAG, String.valueOf(e));
+                }
+                catch (Exception e2) {
+                    Log.d(TAG, String.valueOf(e));
+                    Log.d(TAG, String.valueOf(e2));
+                }
                 cancel(true);
             }
             return null;

@@ -360,7 +360,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
                                 b.addProximity(beacon.getRssi(),timeNow);
                                 found = true;
                                 if(isBeaconInRecordingRange(b)){
-                                    shouldIRecord(true);
+                                    shouldIRestartRecord(true);
                                 }
 
                                 break;
@@ -389,10 +389,11 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
                 //if any of the beacons above returns that it is in recording range,
                 // then shouldIRecord returns positive
 
-                if(shouldIRecord(false)){
+                if(shouldIRestartRecord(false)){
                     //makeToastHere("inside 5 meters ");
                     //Log.d(TAG, "I see a beacon that is less than 5 meters away.");
                     //TODO: send data back to application?
+                    //makeToastHere("inside 5 meters: " + trackedBeacons.get(0).getProximity());
                     if(BeaconRecordingActivated) {
                         if(!isRecording) {
                             startRecordingResetCall();
@@ -400,7 +401,9 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
                     }
                 }
                 else{
-                    stopRecordingCall();
+                    if(isRecording) {
+                        stopRecordingCall();
+                    }
                 }
 
                 updateBeaconView();
@@ -454,43 +457,27 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     // RECORD?
     // this methods uses an heuristic evaluation to see if the recorder should be called
     public boolean isBeaconInRecordingRange(TrackedBeacon foundBeacon){
-
-        Double dist = foundBeacon.getProximity();
-        //the distance is added to a queue, where only the last 10 are, by removing and adding
-        //it calculates the average distance.
-
-        if(foundBeacon.lastTenDistances.size() < 10){
-            // Now initialised with 10 values, this is not used anymore
-            foundBeacon.lastTenDistances.add(dist);
-            foundBeacon.average = (foundBeacon.lastTenDistances.size()*foundBeacon.average+dist)/(foundBeacon.lastTenDistances.size()+1);
-            return false;
-        } else{
-            foundBeacon.lastTenDistances.add(dist);
-            double removedDigit = (double) foundBeacon.lastTenDistances.poll();
-            foundBeacon.average = (10*foundBeacon.average-removedDigit+dist)/10;
-        }
-        //Log.d(TAG,"average: "+foundBeacon.average);
-        for(TrackedArea area: trackedAreas){
-            if (foundBeacon.average < area.getThresholdDistance(foundBeacon) && area.isRecordingActive){
+        for (TrackedArea area : trackedAreas) {
+            if (foundBeacon.average > area.getThresholdDistance(foundBeacon) && area.isRecordingActive) {
                 return true;
             }
         }
         return false;
-        //TODO: Implement that this looks at how close it has been on average, and how close the threshold areas are
+
     }
 
     // once called the screen recorder is sent and intent to SKIP recording
     public void stopRecordingCall(){
-        lastSeen = new Date().getTime();
-        SharedPreferences.Editor myEdit
-            = statePrefs.edit();
-        myEdit.putBoolean("shouldRecord", false);
-        myEdit.commit();
         if(isRecording){
             Intent startIntent = new Intent(this, RecorderService.class);
             startIntent.setAction(Const.SCREEN_RECORDING_SKIP);
             this.startService(startIntent);
         }
+        lastSeen = new Date().getTime();
+        SharedPreferences.Editor myEdit
+            = statePrefs.edit();
+        myEdit.putBoolean("shouldRecord", false);
+        myEdit.commit();
     }
 
     // once called the screen recorder is sent and intent to START recording
@@ -501,7 +488,9 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         myEdit.commit();
         Log.d(Const.TAG, "Recording Service is running: " + String.valueOf(isServiceRunning(RecorderService.class)));
         if (mMediaProjection == null && !(isRecording)) { //&& !isServiceRunning(RecorderService.class)
-            if (mProjectionManager==null){mProjectionManager=(MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);}
+            if (mProjectionManager==null){
+                mProjectionManager=(MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);
+            }
           //Request Screen recording permission
             Log.d(Const.TAG, "send getScreenshotPermission");
             getScreenshotPermission();
@@ -624,6 +613,8 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
                 openScreenshotPermissionRequester();
             }
         } catch (final RuntimeException ignored) {
+            Toast toast = Toast.makeText(staticContext, "try and catch getScreenshotPermission", Toast.LENGTH_SHORT);
+            toast.show();
             openScreenshotPermissionRequester();
         }
     }
@@ -680,20 +671,32 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
                 .setDefaults(Notification.DEFAULT_ALL)
                 .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
                 .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText("TEXT"))
-                .setContentText("TEXT")
+                        .bigText("Accept recording permission"))
+                .setContentText("Accept permission to activate the screen recording application")
                 .setFullScreenIntent(buildPendingIntent(context, intent), true);
 
         return(b);
 
     }
 
-    private boolean shouldIRecord(boolean shouldRecord){
-        if(shouldRecord) {
+    private boolean shouldIRestartRecord(boolean shouldRecordTimerReset){
+        if(shouldRecordTimerReset) {
             lastShouldRecord = new Date().getTime();
         }
         long timeNow = new Date().getTime();
+        //if(!(timeNow-lastShouldRecord<5000)){makeToastHere("too long I since saw a beacon, shutdown!");}
         return timeNow-lastShouldRecord<5000;
+    }
+
+    public boolean shouldIRecordAtScreenReceived(){
+        for (TrackedBeacon b : trackedBeacons) {
+            if(isBeaconInRecordingRange(b)){
+                if(shouldIRestartRecord(true)){
+                    return true;
+                };
+            }
+        }
+        return false;
     }
 
     private static PendingIntent buildPendingIntent(Context context, Intent intent) {
