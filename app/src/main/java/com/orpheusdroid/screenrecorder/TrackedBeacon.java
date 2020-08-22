@@ -1,6 +1,8 @@
 package com.orpheusdroid.screenrecorder;
 
 
+import android.util.Log;
+
 import androidx.annotation.Nullable;
 
 import org.altbeacon.beacon.Beacon;
@@ -16,6 +18,7 @@ import java.util.Queue;
 //TODO: this is just placeholder
 public class TrackedBeacon {
 
+    private static final String TAG = "TrackedBeacon";
     private String description;
     private String uuid;
     private int minor;
@@ -24,6 +27,7 @@ public class TrackedBeacon {
     private Beacon myBeaconObject;
     public Long lastSeen;
     private ArrayList<ProximityDataPoint> proximityData;
+    private ArrayList<ProximityDataPoint> oldProximityData;
     private ArrayList<AreaThresholds> areaThresholdData;
 
     //this is an array with pointers to TrackedArea
@@ -59,11 +63,16 @@ public class TrackedBeacon {
             average = (10 * average - removedDigit + p) / 10;
         }
         lastSeen = t;
+        Log.d(TAG, "addProximity: time: " + t);
+        Log.d(TAG, "addProximity: value: " + p);
         proximityData.add(new ProximityDataPoint(p, t));
     }
 
     public ArrayList<ProximityDataPoint> getProximityData() {
         return proximityData;
+    }
+    public void resetProxDat(){
+        proximityData = new ArrayList<ProximityDataPoint>();
     }
 
     public ArrayList<AreaThresholds> getAreaThresholdData() {

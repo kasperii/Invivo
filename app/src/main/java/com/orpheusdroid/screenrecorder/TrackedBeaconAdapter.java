@@ -94,7 +94,7 @@ public class TrackedBeaconAdapter extends RecyclerView.Adapter<TrackedBeaconAdap
         });
 
 
-        syncBeaconToShared();
+        //syncBeaconToShared();
 
     }
 
@@ -176,18 +176,6 @@ public class TrackedBeaconAdapter extends RecyclerView.Adapter<TrackedBeaconAdap
         }
 
         this.notifyDataSetChanged();
-    }
-    public void saveObjectInShared(ArrayList myListOfObjects, String s){
-
-        SharedPreferences.Editor myEdit = statePrefs.edit();
-        Gson gson = new Gson();
-        String json = gson.toJson(myListOfObjects);
-        myEdit.putString(s, json);
-        myEdit.commit();
-    }
-
-    public void syncBeaconToShared(){
-        saveObjectInShared(mTrackedBeacons,"trackedBeacons");
     }
 
     private void areYouSureDelete(){

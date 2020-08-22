@@ -93,7 +93,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
-import static com.orpheusdroid.screenrecorder.BeaconRecorderApplication.getScreenshotPermission;
 import static com.orpheusdroid.screenrecorder.BeaconRecorderApplication.screenshotPermission;
 
 /**
@@ -293,6 +292,7 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
             return;
         }
 
+
         mFusedLocationClient.getLastLocation()
                 .addOnSuccessListener(new OnSuccessListener<Location>() {
                                           @Override
@@ -463,6 +463,7 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
                 sendBroadcast(TouchIntent);
             }
         }
+        myApp.putIsRecording(false);
         stopped = true;
     }
 
@@ -493,10 +494,12 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
             if (recordingCounter == 0) {
                 data = intent.getParcelableExtra(Const.RECORDER_INTENT_DATA);
                 result = intent.getIntExtra(Const.RECORDER_INTENT_RESULT, Activity.RESULT_OK);
+
                 previousData = data;
                 previousResult = result;
                 recordingCounter++;
             } else {
+                //?? does this disturb the
                 data = previousData;
                 result = previousResult;
             }
@@ -571,21 +574,21 @@ public class RecorderService extends AccessibilityService implements ShakeEventM
 
         mMediaRecorder = new MediaRecorder();
         initRecorder();
-
+        //screenshotPermission = myApp.getScreenshotPermission();
 
         //Set Callback for MediaProjection
         mMediaProjectionCallback = new MediaProjectionCallback();
         MediaProjectionManager mProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-
+        //THIS IS THE CURRENT MEDIA PROJECTION FROM THE APP
+        //mMediaProjection = myApp.getmMediaProjection();
+        mMediaProjection = myApp.getmMediaProjection();
+        //TODO if null, send stop intent?
+        //mMediaProjection = mProjectionManager.getMediaProjection(Activity.RESULT_OK, (Intent) screenshotPermission.clone());
         Log.d(Const.TAG, "Value of data" + String.valueOf(data));
 
 
         //Initialize MediaProjection using data received from Intent
-
-
-        mMediaProjection = mProjectionManager.getMediaProjection(result, data);
-
-        Intent s = screenshotPermission;
+        //mMediaProjection = mProjectionManager.getMediaProjection(result, data);
         mMediaProjection.registerCallback(mMediaProjectionCallback, null);
 
         /* Create a new virtual display with the actual default display

@@ -176,6 +176,11 @@ public class BeaconTrackerFragment extends Fragment{
 
         return view;
     }
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        view = null; // now cleaning up!
+    }
 
 
 

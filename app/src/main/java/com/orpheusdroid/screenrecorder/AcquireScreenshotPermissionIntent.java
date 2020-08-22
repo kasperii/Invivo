@@ -10,40 +10,46 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-
-import static com.orpheusdroid.screenrecorder.BeaconRecorderApplication.getmProjectionManager;
-import static com.orpheusdroid.screenrecorder.BeaconRecorderApplication.setScreenshotPermission;
 public class AcquireScreenshotPermissionIntent extends Activity {
 
     private Context context;
     private static MediaProjectionManager mediaProjectionManager;
     private MediaProjection mediaProjection;
-    static boolean acquiringScreenshotPermissionIntent = false;
+    private BeaconRecorderApplication myApp;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        Log.d("AcquireScreenshotPermissionIntent", "onCreate");
+        myApp = ((BeaconRecorderApplication) getApplicationContext());
         super.onCreate(savedInstanceState);
-        mediaProjectionManager = getmProjectionManager();
-        mediaProjectionManager = (MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);
-        startActivityForResult(mediaProjectionManager.createScreenCaptureIntent(), Const.SCREEN_RECORD_REQUEST_CODE);
-        acquiringScreenshotPermissionIntent = true;
+        //mediaProjectionManager = getmProjectionManager();
+        //mediaProjectionManager = (MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);
+        startActivityForResult(myApp.getmProjectionManager().createScreenCaptureIntent(), Const.SCREEN_RECORD_REQUEST_CODE);
     }
 
     @Override
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         Log.d("AcquireScreenshotPermissionIntent", "Opened");
-        super.onActivityResult(requestCode, resultCode, data);
         if (1003 == requestCode) {
             if (Activity.RESULT_OK == resultCode) {
-                setScreenshotPermission(requestCode, resultCode, (Intent) data.clone());
+                myApp.makeToastHere("AScreenshtPermisIntent - ok !");
+                myApp.setScreenshotPermission(requestCode, resultCode, (Intent) data.clone());
             }
         } else if (Activity.RESULT_CANCELED == resultCode) {
-            setScreenshotPermission(requestCode, resultCode, null);
             Log.d("AcquireScreenshotPermissionIntent","no access");
-
+            myApp.makeToastHere("AScreenshtPermisIntent - no !");
         }
-        acquiringScreenshotPermissionIntent = false;
+        super.onActivityResult(requestCode, resultCode, data);
+        myApp = null;
         this.finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d("AcquireScreenshotPermissionIntent", "onDestroy: ");
+        myApp = null;
+        //context = null;
     }
 
 

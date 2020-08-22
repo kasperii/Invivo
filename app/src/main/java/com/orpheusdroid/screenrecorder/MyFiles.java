@@ -68,9 +68,11 @@ public class MyFiles {
         fList = getFiles(myDirectory); // get the file list
         File file = fList.get(0);
 
+
         if (fList.size() > 0) {
             long min = fList.get(0).lastModified();
             for (int i = 1; i < fList.size(); i++) {
+                Log.d(TAG, "fList.get(i).lastModified(): " + fList.get(i).lastModified());
                 if (fList.get(i).lastModified() < min) {
                     min = fList.get(i).lastModified();
                     file = fList.get(i);

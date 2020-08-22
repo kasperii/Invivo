@@ -86,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
 
   private static final String TAG = "MainActivity";
   private static final String EXTRA_STORAGE_REFERENCE_KEY = "StorageReference";
+  private BeaconRecorderApplication myApp;
 
   //Method to create app directory which is default directory for storing recorded videos
   public static void createDir() {
@@ -106,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-
+    myApp = ((BeaconRecorderApplication) getApplicationContext());
     // intent = new Intent(MainActivity.this, RecorderService.class);
 
     Intent intent = getIntent();
@@ -342,6 +343,7 @@ public class MainActivity extends AppCompatActivity {
 
     /*If code reaches this point, congratulations! The user has granted screen mirroring permission
      * Let us set the recorderservice intent with relevant data and start service*/
+    myApp.setScreenshotPermission(requestCode, resultCode, (Intent) data.clone());
     Intent recorderService = new Intent(this, RecorderService.class);
     recorderService.setAction(Const.SCREEN_RECORDING_START);
     recorderService.putExtra(Const.RECORDER_INTENT_DATA, data);
@@ -353,6 +355,7 @@ public class MainActivity extends AppCompatActivity {
     Intent screenServiceIntent = new Intent(this, ScreenService.class);
     startService(screenServiceIntent);
     recordingIsON = true;
+    super.onActivityResult(requestCode, resultCode, data);
   }
 
 

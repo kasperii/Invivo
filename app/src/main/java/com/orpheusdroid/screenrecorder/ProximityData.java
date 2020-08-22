@@ -1,11 +1,14 @@
 package com.orpheusdroid.screenrecorder;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.TimeZone;
 
 public class ProximityData {
     private String beaconUuid;
     private ArrayList<ProximityDataPoint> proximities;
+    private ArrayList<ProximityDataPoint> oldProximities;
     private ArrayList<AreaThresholds> areaThresholds;
     private long timeStart;
     private long timeEnd;
@@ -24,6 +27,7 @@ public class ProximityData {
         proximities = pr;
         areaThresholds = at;
         userID = uid;
+        oldProximities = new ArrayList<ProximityDataPoint>();
         this.timeZone = TimeZone.getDefault();
     }
 
@@ -31,12 +35,16 @@ public class ProximityData {
         return proximities;
     }
 
+    ArrayList<ProximityDataPoint> getOldProximities() {
+        return oldProximities;
+    }
+
     public void addProximities(ArrayList<ProximityDataPoint> proximities) {
         this.proximities = proximities;
     }
 
     public void resetProximities(){
-        this.proximities.clear();
+        this.oldProximities.clear();
     }
 
     public String getUserID() {
@@ -64,6 +72,21 @@ public class ProximityData {
 
     public void setTimeEnd(long timeEnd) {
         this.timeEnd = timeEnd;
+    }
+
+    public void setNewList(){
+        long timeFilter = 0;
+        for(ProximityDataPoint pdp: proximities) {
+            Log.d("TAG", "pdp: " + pdp.getProximityPoint() +" time: " + pdp.getTimestamp());
+            if(pdp.getTimestamp()-timeFilter > 500) {
+                oldProximities.add(pdp);
+                timeFilter = pdp.getTimestamp();
+            } else{
+               Log.d("TAG", "removed: " + pdp.getProximityPoint() +" time diff: " + (pdp.getTimestamp()-timeFilter));
+
+            }
+        }
+        this.proximities.clear();
     }
 
     public long getTimeEnd() {

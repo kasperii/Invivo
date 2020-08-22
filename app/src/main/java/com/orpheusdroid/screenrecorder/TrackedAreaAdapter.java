@@ -133,7 +133,6 @@ public class TrackedAreaAdapter extends RecyclerView.Adapter<TrackedAreaAdapter.
 
             }
         });
-        syncBeaconAreaToShared();
     }
 
     // total number of rows
@@ -148,7 +147,7 @@ public class TrackedAreaAdapter extends RecyclerView.Adapter<TrackedAreaAdapter.
          if(tb!=null){
              tv.setText(area.getObjectByIndex(0).getDescription());
              br.setVisibility(View.VISIBLE);
-             Log.d("updateBeaconLight",tb.getDescription() + " "+tb.whenLastSeen());
+             //Log.d("updateBeaconLight",tb.getDescription() + " "+tb.whenLastSeen());
              if(tb.whenLastSeen()>10000) {
                  s.setBackgroundResource(R.drawable.beacon_lost);
                  return;
@@ -299,20 +298,6 @@ public class TrackedAreaAdapter extends RecyclerView.Adapter<TrackedAreaAdapter.
 
         Toast toast = Toast.makeText(this.c, text, Toast.LENGTH_SHORT);
         toast.show();
-    }
-
-    public void saveObjectInShared(ArrayList myListOfObjects, String s){
-
-        SharedPreferences.Editor myEdit = statePrefs.edit();
-        Gson gson = new Gson();
-        String json = gson.toJson(myListOfObjects);
-        myEdit.putString(s, json);
-        myEdit.commit();
-    }
-
-    public void syncBeaconAreaToShared(){
-        saveObjectInShared(mTrackedAreas,"trackedAreas");
-        saveObjectInShared(trackedBeacons,"trackedBeacons");
     }
 
     private void chooseBeaconsInArea(View view){

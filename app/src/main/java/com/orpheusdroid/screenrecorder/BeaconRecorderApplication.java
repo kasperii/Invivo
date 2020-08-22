@@ -12,13 +12,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.hardware.display.DisplayManager;
+import android.media.MediaRecorder;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
+import android.os.PowerManager;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.Display;
 import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
@@ -41,8 +45,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
-
-import static com.orpheusdroid.screenrecorder.AcquireScreenshotPermissionIntent.acquiringScreenshotPermissionIntent;
 
 /**
  * Created by dyoung on 12/13/13.
@@ -85,6 +87,8 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     private ArrayList<ProximityData> currentBeaconProximityDataList;
     private boolean searchingForNewBeacons = false;
     private BroadcastReceiver chargerReceiver;
+    private MediaRecorder mMediaRecorder;
+    private boolean isScreenOn;
 
     @Override
     public void onCreate() {
@@ -173,28 +177,28 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         //
         beaconManager.setEnableScheduledScanJobs(false);
         beaconManager.setBackgroundBetweenScanPeriod(0);
-        beaconManager.setBackgroundScanPeriod(100);
+        beaconManager.setBackgroundScanPeriod(1100);
 
         // Here foreground service ends !
         // all between start and here for only background scanning
 
-        Notification.Builder debugBuilder = new Notification.Builder(this);
-        debugBuilder.setSmallIcon(R.drawable.ic_notification);
-        debugBuilder.setContentTitle("Update about Beacons");
-        Intent debugIntent = new Intent(this, BeaconTrackerFragment.class);
-        PendingIntent debugPendingIntent = PendingIntent.getActivity(
-                this, 0, debugIntent, PendingIntent.FLAG_UPDATE_CURRENT
-        );
-        debugBuilder.setContentIntent(pendingIntent);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel("My debug notification Channel ID",
-                    "My debug notification Name", NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription("My debug Notification Channel Description");
-            NotificationManager notificationManager = (NotificationManager) getSystemService(
-                    Context.NOTIFICATION_SERVICE);
-            notificationManager.createNotificationChannel(channel);
-            builder.setChannelId(channel.getId());
-        }
+//        Notification.Builder debugBuilder = new Notification.Builder(this);
+//        debugBuilder.setSmallIcon(R.drawable.ic_notification);
+//        debugBuilder.setContentTitle("Update about Beacons");
+//        Intent debugIntent = new Intent(this, BeaconTrackerFragment.class);
+//        PendingIntent debugPendingIntent = PendingIntent.getActivity(
+//                this, 0, debugIntent, PendingIntent.FLAG_UPDATE_CURRENT
+//        );
+//        debugBuilder.setContentIntent(pendingIntent);
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            NotificationChannel channel = new NotificationChannel("My debug notification Channel ID",
+//                    "My debug notification Name", NotificationManager.IMPORTANCE_DEFAULT);
+//            channel.setDescription("My debug Notification Channel Description");
+//            NotificationManager notificationManager = (NotificationManager) getSystemService(
+//                    Context.NOTIFICATION_SERVICE);
+//            notificationManager.createNotificationChannel(channel);
+//            builder.setChannelId(channel.getId());
+//        }
 
 
 
@@ -226,7 +230,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
                 //makeToastHere("Action power");
                 Log.d(Const.TAG, "********** " + action);
                 if (action.equals(Intent.ACTION_POWER_CONNECTED)) {
-                    makeToastHere("ACTION_POWER_CONNECTED");
+                    //makeToastHere("ACTION_POWER_CONNECTED");
                     Log.d(Const.TAG, "Power connected ");
                     Intent uploaderIntent = new Intent(context, UploaderService.class);
                     uploaderIntent.setAction(Const.FILE_UPLOADING_START);
@@ -243,6 +247,10 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
         registerReceiver(chargerReceiver, new IntentFilter(Intent.ACTION_POWER_CONNECTED));
         registerReceiver(chargerReceiver, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
+
+        screenshotPermission = null;
+        acquireScreenshotPermission();
+        isScreenOn = isScreenOn();
     }
 
 
@@ -259,7 +267,11 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     void setSearchingForNewBeacons(boolean shouldSearch){
         searchingForNewBeacons = shouldSearch;
     }
-    static MediaProjectionManager getmProjectionManager(){return mProjectionManager;}
+    MediaProjectionManager getmProjectionManager(){
+        if(mProjectionManager == null){
+            mProjectionManager = (MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);
+        }
+        return mProjectionManager;}
     void makeToastHere(String text){
         Toast toast = Toast.makeText(this, text, Toast.LENGTH_SHORT);
         toast.show();
@@ -280,7 +292,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         }
     }
     void enableMonitoring() {
-        makeToastHere("enable monitoring");
+        //makeToastHere("enable monitoring");
         monitoring = true;
         Region region = new Region("backgroundRegion",
                 null, null, null);
@@ -341,14 +353,17 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         myRangeNotifier = new RangeNotifier() {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
+                Log.d(TAG, "didRangeBeaconsInRegion: " + beaconManager.getRangingNotifiers());
                 //Log.d(TAG,"didRangeBeaconsInRegion");
                 timeNow = new Date().getTime();
+                Log.d(TAG, "didRangeBeaconsInRegion: time is " + timeNow);
                 //for every 15 minutes of continuous ranging, save the data.
+
                 if(timeNow-dataCollectionSessionStartTime > 900000){
+                //if(timeNow-dataCollectionSessionStartTime > 60000){
                     Log.d(TAG, "15 minute proximity data storage session reset");
                     resetSavingProximityData(true);
                 }
-                //TODO: add gyro?
                 for (Beacon beacon: beacons) {
                     //Log.d(TAG,"beacon" + beacon.toString());
                     boolean found = false;
@@ -360,7 +375,8 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
                                 b.addProximity(beacon.getRssi(),timeNow);
                                 found = true;
                                 if(isBeaconInRecordingRange(b)){
-                                    shouldIRestartRecord(true);
+                                    lastShouldRecord = timeNow;
+                                    //shouldIRestartRecord(true);
                                 }
 
                                 break;
@@ -369,6 +385,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
                     }
                     //if searching for new beacons
+                    // only active when the search window is up
                     if(!found && searchingForNewBeacons){
                         boolean newFound = true;
                         for (TrackedBeacon b : foundBeacons) {
@@ -388,13 +405,9 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
                 //if any of the beacons above returns that it is in recording range,
                 // then shouldIRecord returns positive
-
-                if(shouldIRestartRecord(false)){
-                    //makeToastHere("inside 5 meters ");
-                    //Log.d(TAG, "I see a beacon that is less than 5 meters away.");
-                    //TODO: send data back to application?
-                    //makeToastHere("inside 5 meters: " + trackedBeacons.get(0).getProximity());
-                    if(BeaconRecordingActivated) {
+                if(shouldIRestartRecord()){
+                    //makeToastHere("inside threshold: " + trackedBeacons.get(0).getProximity());
+                    if(BeaconRecordingActivated && isScreenOn) {
                         if(!isRecording) {
                             startRecordingResetCall();
                         }
@@ -407,22 +420,6 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
                 }
 
                 updateBeaconView();
-                if (beacons.size() > 0) {
-                  //Log.d(TAG, "didRangeBeaconsInRegion called with beacon count:  "+beacons.size());
-                    Beacon firstBeacon = beacons.iterator().next();
-                    //Log.d(TAG, "The first beacon " + firstBeacon.toString() + " is about " + firstBeacon.getDistance() + " meters away.");
-                    //makeToastHere("The first beacon " + firstBeacon.toString() + " is about " + firstBeacon.getDistance() + " meters away.");
-                  //TODO: eval if recording should restart.
-
-
-                  }
-                  //TODO: Send to JSON? should this be done every second?
-
-                  //Look at JsonUtil - and also recorder service public void stopScreenRec() {
-
-
-                  //logToDisplay("The first beacon " + firstBeacon.toString() + " is about " + firstBeacon.getDistance() + " meters away.");
-                  //MyNotification.createNotification(getApplicationContext(), createRangingStringOut(firstBeacon.getDistance()), "testString");
             }
 
 
@@ -458,6 +455,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     // this methods uses an heuristic evaluation to see if the recorder should be called
     public boolean isBeaconInRecordingRange(TrackedBeacon foundBeacon){
         for (TrackedArea area : trackedAreas) {
+            //the distance is measured in negative values, hence the beacon is closer if average distance is bigger than the threshold
             if (foundBeacon.average > area.getThresholdDistance(foundBeacon) && area.isRecordingActive) {
                 return true;
             }
@@ -474,18 +472,35 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
             this.startService(startIntent);
         }
         lastSeen = new Date().getTime();
-        SharedPreferences.Editor myEdit
-            = statePrefs.edit();
-        myEdit.putBoolean("shouldRecord", false);
-        myEdit.commit();
     }
+    // once called the screen recorder is sent and intent to SKIP recording
+    public void stopRecordingCallFromScreen(){
+        isScreenOn = false;
+        stopRecordingCall();
+    }
+    public void screenOn(){
+        isScreenOn = true;
+    }
+    public boolean isScreenOn() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+        DisplayManager dm = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
+        for (Display display : dm.getDisplays()) {
+            if (display.getState() == Display.STATE_ON) {
+                isScreenOn = true;
+                return true;
+            }
+        }
+        return false;
+    } else {
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        //noinspection deprecation
+        isScreenOn = pm.isScreenOn();
+        return isScreenOn;
+    }
+}
 
     // once called the screen recorder is sent and intent to START recording
     public void startRecordingResetCall(){
-        SharedPreferences.Editor myEdit
-            = statePrefs.edit();
-        myEdit.putBoolean("shouldRecord", true);
-        myEdit.commit();
         Log.d(Const.TAG, "Recording Service is running: " + String.valueOf(isServiceRunning(RecorderService.class)));
         if (mMediaProjection == null && !(isRecording)) { //&& !isServiceRunning(RecorderService.class)
             if (mProjectionManager==null){
@@ -493,7 +508,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
             }
           //Request Screen recording permission
             Log.d(Const.TAG, "send getScreenshotPermission");
-            getScreenshotPermission();
+            acquireScreenshotPermission();
         } else if (isRecording) {
           Log.d(Const.TAG, "Recording Service is running - skip reset from beacontracker");
           return;
@@ -501,8 +516,9 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         if(hasScreenshotPermission()){
 
             Intent recorderService = new Intent(this, RecorderService.class);
-            recorderService.setAction(Const.SCREEN_RECORDING_START);
-            recorderService.putExtra(Const.RECORDER_INTENT_DATA, screenshotPermission);
+            recorderService.setAction(Const.SCREEN_RECORDING_RESTART);
+            //It does not use these, as it gets them from myApp in RecorderService now
+            recorderService.putExtra(Const.RECORDER_INTENT_DATA, (Intent) screenshotPermission.clone());
             recorderService.putExtra(Const.RECORDER_INTENT_RESULT, resultCode);
             startService(recorderService);
 
@@ -512,7 +528,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
 
 
-            Intent startIntent = new Intent(this, RecorderService.class);
+//           Intent startIntent = new Intent(this, RecorderService.class);
 //            if(lastSeen - new Date().getTime()>60000){
 //                startIntent.setAction(Const.SCREEN_RECORDING_RESTART);
 //            }
@@ -601,52 +617,65 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     //the following functions are implemented to open and create a new notification
     //that opens a  ScreenshotPermissionRequest. Else the app cannot start from background.
 
-    public static void getScreenshotPermission() {
+    public static void acquireScreenshotPermission() {
         try {
-            if (hasScreenshotPermission()) {
-                if(null != mMediaProjection) {
-                    mMediaProjection.stop();
-                    mMediaProjection = null;
-                }
-                mMediaProjection = mProjectionManager.getMediaProjection(Activity.RESULT_OK, (Intent) screenshotPermission.clone());
+            if (hasScreenshotPermission() && !launchingNotificationIntent) {
+//                if(null != mMediaProjection) {
+//                    mMediaProjection.stop();
+//                    mMediaProjection = null;
+//                }
+//                //should this be here?
+//                mMediaProjection = mProjectionManager.getMediaProjection(Activity.RESULT_OK, (Intent) screenshotPermission.clone());
             } else {
                 openScreenshotPermissionRequester();
             }
         } catch (final RuntimeException ignored) {
-            Toast toast = Toast.makeText(staticContext, "try and catch getScreenshotPermission", Toast.LENGTH_SHORT);
-            toast.show();
             openScreenshotPermissionRequester();
         }
     }
     protected static void openScreenshotPermissionRequester(){
-        if(!acquiringScreenshotPermissionIntent) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) { // This is at least android 10...
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) { // This is at least android 10...
+            if(!launchingNotificationIntent){
                 final Intent intent = new Intent(staticContext, AcquireScreenshotPermissionIntent.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 //staticContext.startActivity(intent);
-                if(!launchingNotificationIntent){
-                launchNotificationIntent(intent);}
-            }else{
-                final Intent intent = new Intent(staticContext, AcquireScreenshotPermissionIntent.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                staticContext.startActivity(intent);
+                launchNotificationIntent(intent);
             }
+        }else{
+            final Intent intent = new Intent(staticContext, AcquireScreenshotPermissionIntent.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            staticContext.startActivity(intent);
         }
     }
-    protected static void setScreenshotPermission(final int req, final int resc, final Intent permissionIntent) {
+    protected void setScreenshotPermission(final int req, final int resc, final Intent permissionIntent) {
         requestCode = req;
         resultCode = resc;
         screenshotPermission = permissionIntent;
-    }
-    public static void getScreenshotPermission(final Intent permissionIntent) {
-        screenshotPermission = permissionIntent;
         launchingNotificationIntent = false;
     }
+    public static Intent getScreenshotPermission() {
+        return (Intent) screenshotPermission.clone();
+    }
+
     public static boolean hasScreenshotPermission(){
+        Log.d(TAG, "hasScreenshotPermission: " + screenshotPermission);
+        Log.d(TAG, "hasScreenshotPermission: " + (screenshotPermission!=null));
         return screenshotPermission!=null;
     }
-    public static MediaProjection getmMediaProjection(){return mMediaProjection;}
+    public MediaProjection getmMediaProjection(){
+        try {
+            if(null != mMediaProjection) {
+                mMediaProjection.stop();
+                mMediaProjection = null;
+            }
+            mMediaProjection = mProjectionManager.getMediaProjection(Activity.RESULT_OK, (Intent) screenshotPermission.clone());
+            return mMediaProjection;
+
+        } catch (final RuntimeException ignored) {
+            openScreenshotPermissionRequester();
+            return null;
+        }
+    }
 
 
     private static void launchNotificationIntent(Intent i) {
@@ -679,23 +708,25 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
     }
 
-    private boolean shouldIRestartRecord(boolean shouldRecordTimerReset){
-        if(shouldRecordTimerReset) {
-            lastShouldRecord = new Date().getTime();
-        }
+    //This sets should record - but also provides a 5 second delay until not valid
+    private boolean shouldIRestartRecord(){
         long timeNow = new Date().getTime();
         //if(!(timeNow-lastShouldRecord<5000)){makeToastHere("too long I since saw a beacon, shutdown!");}
         return timeNow-lastShouldRecord<5000;
     }
 
     public boolean shouldIRecordAtScreenReceived(){
-        for (TrackedBeacon b : trackedBeacons) {
-            if(isBeaconInRecordingRange(b)){
-                if(shouldIRestartRecord(true)){
-                    return true;
-                };
-            }
+        if(shouldIRestartRecord()) {
+            return true;
         }
+//        for (TrackedBeacon b : trackedBeacons) {
+//            if(isBeaconInRecordingRange(b)){
+//                if(shouldIRestartRecord()) {
+//                    return true;
+//                }
+//
+//            }
+//        }
         return false;
     }
 
@@ -722,10 +753,12 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
     }
 
     private void resetSavingProximityData(boolean shouldRestart){
+        Log.d(TAG, "resetSavingProximityData: RESET!");
         long endTime = System.currentTimeMillis();
         // TODO: create
         for(ProximityData proxData: currentBeaconProximityDataList) {
             proxData.setTimeEnd(endTime);
+            proxData.setNewList();
         }
         saveProximityData();
         if(shouldRestart){ startSavingProximityData();}
@@ -733,16 +766,18 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
 
     //saves and removes all proxmity data
     private void saveProximityData(){
-        Log.d(TAG, "start writing prox data!");
+        //Log.d(TAG, "start writing prox data!");
         try {
             for (ProximityData proxData : currentBeaconProximityDataList) {
                 Log.d(TAG, "prox data is this long: " + proxData.getProximities().size());
-                if(proxData.getProximities().size() != 0) {
+                if(proxData.getOldProximities().size() != 0) {
                     JsonUtil jsonUtil = new JsonUtil();
                     String jsonString = jsonUtil.toJson(proxData);
                     String fileName = proxData.getFileName();
                     jsonUtil.writeJsonFile(jsonString, fileName);
+                    Log.d(TAG, "saveProximityData: filename:" + fileName);
                     proxData.resetProximities();
+                    syncBeaconAreaToShared();
                 }
             }
             currentBeaconProximityDataList.clear();

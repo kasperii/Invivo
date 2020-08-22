@@ -360,6 +360,7 @@ public class UploaderService extends Service {
 
                     JSONObject jsonObj = new JSONObject(jString);
                     jsonObj.put("localPath", uploaderURL);
+                    Log.d(TAG, "run: localPath" + uploaderURL);
                     jString = jsonObj.toString();
                     Log.d(TAG, "JString "+jString);
 
@@ -390,7 +391,7 @@ public class UploaderService extends Service {
                     Log.d(TAG, "success");
                     Log.d(TAG, "Content as String: "+contentAsString);
                     MyFiles.deleteFile(Uri.fromFile(file), context);
-
+                    Log.d(TAG, "files deleted!");
                 } catch (Exception e) {
                     Log.d(TAG, "ERROR JSON" +e);
                     e.printStackTrace();

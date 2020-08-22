@@ -56,7 +56,7 @@ public class JsonUtil {
     }
     public static String toJson(ProximityData proximityData) {
         try {
-            ArrayList<ProximityDataPoint> proximities = proximityData.getProximities();
+            ArrayList<ProximityDataPoint> proximities = proximityData.getOldProximities();
             ArrayList<AreaThresholds> areaThresholds = proximityData.getAreaThresholds();
             // Here we convert Java Object to JSON
             JSONObject jsonObj = new JSONObject();
