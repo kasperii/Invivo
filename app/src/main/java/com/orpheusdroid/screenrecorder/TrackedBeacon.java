@@ -55,6 +55,9 @@ public class TrackedBeacon {
         myBeaconObject = beaconObject;
     }
     public void addProximity(double p, long t){
+        if(lastSeen == null){
+            lastSeen = t;
+        }
         if(lastSeen+10000<t){
             resetAverage(p);
         }else {

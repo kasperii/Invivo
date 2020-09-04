@@ -32,12 +32,12 @@ public class AcquireScreenshotPermissionIntent extends Activity {
         Log.d("AcquireScreenshotPermissionIntent", "Opened");
         if (1003 == requestCode) {
             if (Activity.RESULT_OK == resultCode) {
-                myApp.makeToastHere("AScreenshtPermisIntent - ok !");
+                //myApp.makeToastHere("ScreenshtPermisIntent - ok !");
                 myApp.setScreenshotPermission(requestCode, resultCode, (Intent) data.clone());
             }
         } else if (Activity.RESULT_CANCELED == resultCode) {
             Log.d("AcquireScreenshotPermissionIntent","no access");
-            myApp.makeToastHere("AScreenshtPermisIntent - no !");
+            //myApp.makeToastHere("ScreenshtPermisIntent - no !");
         }
         super.onActivityResult(requestCode, resultCode, data);
         myApp = null;

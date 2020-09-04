@@ -86,8 +86,14 @@ public class MyFiles {
     public static boolean isClosed(File file) {
         long lastModified = file.lastModified();
         long currentTime = Calendar.getInstance().getTimeInMillis();
-        long fModifiedTime = (long) (((currentTime - lastModified) / (1000 * 60)) % 60);
-        //Log.d(TAG, " The value of  "+String.valueOf(fModifiedTime));
+        //Old way of looking if file is closed
+        //long fModifiedTime = (long) (((currentTime - lastModified) / (1000 * 60)) % 60);
+        //new way
+        long fModifiedTime = (long) (((currentTime - lastModified) / (1000 * 60)));
+        Log.d(TAG, " The Filename is  "+file.getName());
+        Log.d(TAG, " The value of  "+String.valueOf(fModifiedTime));
+        Log.d(TAG, " The currentTime is  "+currentTime);
+        Log.d(TAG, " The lastModified is  "+lastModified);
 
         if (fModifiedTime >= 1) {
             return true;

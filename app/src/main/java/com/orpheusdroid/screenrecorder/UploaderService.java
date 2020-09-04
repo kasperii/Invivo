@@ -275,39 +275,40 @@ public class UploaderService extends Service {
         @Override
         protected URL doInBackground(Void... params) {
             try {
-                if(file.toString().endsWith(".json")){
+                if(file.toString().endsWith("(green|red|purple).json")){
                     uploadJson(fileName.substring(0,fileName.length()- 5));
 
                     //hardcoded return - not great but makes the onPostExecute print link
                     // Log.d(TAG, "returning from doInBackground");
                     return new URL("https://invivo.dsv.su.se/upload.php");
+                } else {
+                    TusUploader uploader = client.resumeOrCreateUpload(upload);
+                    long totalBytes = upload.getSize();
+                    long uploadedBytes = uploader.getOffset();
+                    uploaderURL =  uploader.getUploadURL();
+
+                    Log.d(TAG, "Total bytes"+ totalBytes);
+
+                    // Upload file in 1MiB chunks
+                    uploader.setChunkSize(1024 * 1024);
+
+                    Log.d(TAG, "before while");
+                    Log.d(TAG, "before while"+ isCancelled());
+                    Log.d(TAG, "before while"+ uploader.uploadChunk());
+
+
+                    while (!isCancelled() && uploader.uploadChunk() > 0) {
+                        Log.d(TAG, "While"+ isCancelled());
+                        Log.d(TAG, "While"+ uploader.uploadChunk());
+                        uploadedBytes = uploader.getOffset();
+                            publishProgress(uploadedBytes, totalBytes);
+                        }
+
+                        Log.d(TAG, "after while");
+
+                        uploader.finish();
+                        return uploader.getUploadURL();
                 }
-                TusUploader uploader = client.resumeOrCreateUpload(upload);
-                long totalBytes = upload.getSize();
-                long uploadedBytes = uploader.getOffset();
-                uploaderURL =  uploader.getUploadURL();
-
-                Log.d(TAG, "Total bytes"+ totalBytes);
-
-                // Upload file in 1MiB chunks
-                uploader.setChunkSize(1024 * 1024);
-
-                Log.d(TAG, "before while");
-                Log.d(TAG, "before while"+ isCancelled());
-                Log.d(TAG, "before while"+ uploader.uploadChunk());
-
-
-                while (!isCancelled() && uploader.uploadChunk() > 0) {
-                    Log.d(TAG, "While"+ isCancelled());
-                    Log.d(TAG, "While"+ uploader.uploadChunk());
-                    uploadedBytes = uploader.getOffset();
-                    publishProgress(uploadedBytes, totalBytes);
-                }
-
-                Log.d(TAG, "after while");
-
-                uploader.finish();
-                return uploader.getUploadURL();
 
             } catch (Exception e) {
                 exception = e;
