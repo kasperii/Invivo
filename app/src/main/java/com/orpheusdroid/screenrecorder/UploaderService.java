@@ -221,6 +221,9 @@ public class UploaderService extends Service {
             isUploading = false;
             isPaused = false;
             Log.d(TAG + timestampID, "beginUpload() again");
+            if(file.toString().endsWith(".mp4")) {
+                uploadJson(fileName.substring(0, fileName.length() - 4), uploadURL);
+            }
             beginUpload();
         }
 
@@ -275,12 +278,14 @@ public class UploaderService extends Service {
         @Override
         protected URL doInBackground(Void... params) {
             try {
-                if(file.toString().endsWith("(green|red|purple).json")){
-                    uploadJson(fileName.substring(0,fileName.length()- 5));
-
+                if(file.toString().endsWith("beacon.json")){
+                    uploadJson(fileName.substring(0,fileName.length()- 5),null);
                     //hardcoded return - not great but makes the onPostExecute print link
                     // Log.d(TAG, "returning from doInBackground");
-                    return new URL("https://invivo.dsv.su.se/upload.php");
+                    if (uploaderURL == null){
+                        return new URL("https://invivo.dsv.su.se/upload.php");
+                    }
+                    return uploaderURL;
                 } else {
                     TusUploader uploader = client.resumeOrCreateUpload(upload);
                     long totalBytes = upload.getSize();
@@ -332,7 +337,7 @@ public class UploaderService extends Service {
     }
 
 
-    public void uploadJson(final String jsonFileName) {
+    public void uploadJson(final String jsonFileName, final URL currentUploaderURL) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -360,8 +365,10 @@ public class UploaderService extends Service {
                     }
 
                     JSONObject jsonObj = new JSONObject(jString);
-                    jsonObj.put("localPath", uploaderURL);
-                    Log.d(TAG, "run: localPath" + uploaderURL);
+                    if(uploaderURL != null){
+                        jsonObj.put("localPath", currentUploaderURL);
+                        Log.d(TAG, "run: localPath" + currentUploaderURL);
+                    };
                     jString = jsonObj.toString();
                     Log.d(TAG, "JString "+jString);
 

@@ -743,7 +743,7 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         if(!currentBeaconProximityDataList.isEmpty()){Log.d(TAG,"start new saving though last data list is not empty");}
 
         for(TrackedBeacon trackedBeacon: trackedBeacons) {
-            currentBeaconProximityDataList.add( new ProximityData(trackedBeacon.getUuid(),startTime, getFileSaveName(trackedBeacon),trackedBeacon.getProximityData(),trackedBeacon.getAreaThresholdData(),getAndroidID()));
+            currentBeaconProximityDataList.add( new ProximityData(trackedBeacon.getUuid(),startTime, getProximitySaveName(trackedBeacon),trackedBeacon.getProximityData(),trackedBeacon.getAreaThresholdData(),getAndroidID()));
         }
     }
     private String getAndroidID() {
@@ -796,7 +796,13 @@ public class BeaconRecorderApplication extends Application implements BootstrapN
         SimpleDateFormat formatter = new SimpleDateFormat(filename);
         return prefix + "_" + formatter.format(today) + "_" + b.getDescription();
     }
-
+    private String getProximitySaveName(TrackedBeacon b) {
+        String filename = videoPrefs.getString(getString(R.string.filename_key), "yyyyMMdd_hhmmss");
+        String prefix = "proximity";
+        Date today = Calendar.getInstance().getTime();
+        SimpleDateFormat formatter = new SimpleDateFormat(filename);
+        return prefix + "_" + formatter.format(today) + "_" + b.getDescription() + "_beacon";
+    }
 
     public boolean isNoOtherAreaBySameName(String editText) {
         String name = editText.toString();

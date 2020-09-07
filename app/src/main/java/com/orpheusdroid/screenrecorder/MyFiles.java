@@ -73,7 +73,7 @@ public class MyFiles {
             long min = fList.get(0).lastModified();
             for (int i = 1; i < fList.size(); i++) {
                 Log.d(TAG, "fList.get(i).lastModified(): " + fList.get(i).lastModified());
-                if (fList.get(i).lastModified() < min) {
+                if (fList.get(i).lastModified() < min && (fList.get(i).toString().endsWith("beacon.json") || !(fList.get(i).toString().endsWith(".json")))) {
                     min = fList.get(i).lastModified();
                     file = fList.get(i);
                 }
